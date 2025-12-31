@@ -1,0 +1,178 @@
+{
+  "metadata": {
+    "scan_time": "2025-12-26 14:30:00",
+    "computer_name": "DESKTOP-EXAMPLE",
+    "os_version": "Microsoft Windows NT 10.0.22631.0",
+    "total_checks": 20,
+    "based_on": "KISA 기술적 취약점 분석·평가 방법 상세가이드"
+  },
+  "summary": {
+    "good": 12,
+    "needs_management": 5,
+    "manual_check": 2,
+    "partial_good": 1,
+    "check_failed": 0
+  },
+  "results": [
+    {
+      "item_code": "W-01",
+      "check_title": "Administrator 계정 이름 변경",
+      "status": "양호",
+      "current_state": "현재 Administrator SID(-500) 계정 이름: SysAdmin",
+      "expected_state": "Administrator가 아닌 다른 이름으로 변경됨",
+      "operational_meaning": "기본 관리자 계정 이름을 변경하면 자동화된 공격 도구로부터 계정을 보호할 수 있습니다."
+    },
+    {
+      "item_code": "W-02",
+      "check_title": "Guest 계정 비활성화",
+      "status": "양호",
+      "current_state": "Guest 계정 상태: 비활성화",
+      "expected_state": "Guest 계정이 비활성화되어 있음",
+      "operational_meaning": "Guest 계정을 비활성화하여 인증되지 않은 사용자의 시스템 접근을 차단합니다."
+    },
+    {
+      "item_code": "W-03",
+      "check_title": "불필요한 계정 존재 여부",
+      "status": "수동 확인 필요",
+      "current_state": "활성화된 계정 목록: Administrator (마지막 로그온: 2025-12-26 09:00:00), User (마지막 로그온: 2025-12-26 14:25:00), TestAccount (마지막 로그온: )",
+      "expected_state": "불필요한 계정이 존재하지 않음",
+      "operational_meaning": "불필요한 계정을 제거하여 공격 표면을 줄이고 계정 관리를 용이하게 합니다."
+    },
+    {
+      "item_code": "W-04",
+      "check_title": "암호 복잡성 설정",
+      "status": "양호",
+      "current_state": "암호 복잡성: 활성화",
+      "expected_state": "암호 복잡성 요구사항이 활성화되어 있음",
+      "operational_meaning": "복잡한 암호를 요구하여 추측이나 사전 공격으로부터 계정을 보호합니다."
+    },
+    {
+      "item_code": "W-05",
+      "check_title": "암호 최소 길이 설정",
+      "status": "양호",
+      "current_state": "암호 최소 길이: 10 자",
+      "expected_state": "암호 최소 길이가 8자 이상으로 설정됨",
+      "operational_meaning": "충분한 길이의 암호를 요구하여 무차별 대입 공격에 대한 저항력을 높입니다."
+    },
+    {
+      "item_code": "W-06",
+      "check_title": "암호 최대 사용 기간 설정",
+      "status": "양호",
+      "current_state": "암호 최대 사용 기간: 42 일",
+      "expected_state": "암호 최대 사용 기간이 60일 이하로 설정됨",
+      "operational_meaning": "정기적인 암호 변경을 통해 유출된 암호의 장기간 사용을 방지합니다."
+    },
+    {
+      "item_code": "W-07",
+      "check_title": "암호 최소 사용 기간 설정",
+      "status": "관리 필요",
+      "current_state": "암호 최소 사용 기간: 0 일",
+      "expected_state": "암호 최소 사용 기간이 1일 이상으로 설정됨",
+      "operational_meaning": "암호 변경 직후 재변경을 방지하여 암호 정책 우회를 차단합니다."
+    },
+    {
+      "item_code": "W-08",
+      "check_title": "계정 잠금 임계값 설정",
+      "status": "양호",
+      "current_state": "계정 잠금 임계값: 5 회",
+      "expected_state": "계정 잠금 임계값이 5회 이하로 설정됨",
+      "operational_meaning": "반복적인 로그인 시도를 제한하여 무차별 대입 공격을 차단합니다."
+    },
+    {
+      "item_code": "W-09",
+      "check_title": "계정 로그온 이벤트 감사",
+      "status": "양호",
+      "current_state": "로그온 감사 - 성공: True, 실패: True",
+      "expected_state": "계정 로그온 이벤트 감사가 활성화됨",
+      "operational_meaning": "로그온 시도를 기록하여 비인가 접근 시도를 탐지하고 추적할 수 있습니다."
+    },
+    {
+      "item_code": "W-10",
+      "check_title": "불필요한 서비스 실행 여부",
+      "status": "수동 확인 필요",
+      "current_state": "실행 중인 서비스: 87 개 (위험 서비스 미발견, 수동 검토 필요)",
+      "expected_state": "업무상 필요한 서비스만 실행됨",
+      "operational_meaning": "불필요한 서비스를 중지하여 공격 표면을 줄이고 시스템 리소스를 절약합니다."
+    },
+    {
+      "item_code": "W-11",
+      "check_title": "공유 폴더 및 드라이브 존재 여부",
+      "status": "양호",
+      "current_state": "사용자 정의 공유 폴더 없음",
+      "expected_state": "불필요한 공유 폴더가 존재하지 않음",
+      "operational_meaning": "불필요한 공유를 제거하여 정보 유출 위험을 감소시킵니다."
+    },
+    {
+      "item_code": "W-12",
+      "check_title": "원격 데스크톱 서비스 설정",
+      "status": "부분 양호",
+      "current_state": "원격 데스크톱: 활성화, NLA: 사용",
+      "expected_state": "원격 데스크톱이 비활성화되어 있거나 필요 시 강력한 인증 사용",
+      "operational_meaning": "원격 데스크톱 접근을 제한하여 원격 공격 위험을 감소시킵니다."
+    },
+    {
+      "item_code": "W-13",
+      "check_title": "UAC (사용자 계정 컨트롤) 설정",
+      "status": "양호",
+      "current_state": "UAC: 활성화",
+      "expected_state": "UAC가 활성화되어 있음",
+      "operational_meaning": "UAC를 통해 관리자 권한이 필요한 작업에 대한 승인을 요구하여 악성 소프트웨어의 무단 실행을 방지합니다."
+    },
+    {
+      "item_code": "W-14",
+      "check_title": "Windows 업데이트 설정",
+      "status": "양호",
+      "current_state": "Windows Update 서비스 - 상태: Running, 시작 유형: Automatic",
+      "expected_state": "Windows Update 서비스가 활성화되어 있음",
+      "operational_meaning": "정기적인 보안 업데이트를 통해 알려진 취약점으로부터 시스템을 보호합니다."
+    },
+    {
+      "item_code": "W-15",
+      "check_title": "Windows 방화벽 설정",
+      "status": "양호",
+      "current_state": "방화벽 프로필 - Domain: 활성화, Private: 활성화, Public: 활성화",
+      "expected_state": "모든 프로필에서 방화벽이 활성화되어 있음",
+      "operational_meaning": "방화벽을 통해 불필요한 네트워크 연결을 차단하여 외부 공격을 방어합니다."
+    },
+    {
+      "item_code": "W-16",
+      "check_title": "화면 보호기 설정",
+      "status": "관리 필요",
+      "current_state": "화면 보호기 암호 설정 없음",
+      "expected_state": "화면 보호기에 암호가 설정되어 있음",
+      "operational_meaning": "자리를 비운 동안 화면 잠금을 통해 물리적 접근으로부터 시스템을 보호합니다."
+    },
+    {
+      "item_code": "W-17",
+      "check_title": "로그온 법적 고지 설정",
+      "status": "관리 필요",
+      "current_state": "로그온 법적 고지 미설정",
+      "expected_state": "로그온 시 법적 고지 메시지가 표시됨",
+      "operational_meaning": "시스템 사용에 대한 법적 고지를 통해 무단 접근에 대한 법적 대응을 용이하게 합니다."
+    },
+    {
+      "item_code": "W-18",
+      "check_title": "관리자 그룹 구성원 확인",
+      "status": "양호",
+      "current_state": "Administrators 그룹 구성원 (2 명): DESKTOP-EXAMPLE\\Administrator (User), DESKTOP-EXAMPLE\\SysAdmin (User)",
+      "expected_state": "필요 최소한의 관리자 계정만 존재",
+      "operational_meaning": "관리자 권한을 최소화하여 권한 남용 및 시스템 침해 위험을 감소시킵니다."
+    },
+    {
+      "item_code": "W-19",
+      "check_title": "이동식 미디어 자동 실행 비활성화",
+      "status": "관리 필요",
+      "current_state": "자동 실행 설정 없음 (기본값: 일부 활성화)",
+      "expected_state": "자동 실행 기능이 비활성화되어 있음",
+      "operational_meaning": "이동식 미디어를 통한 악성 코드 자동 실행을 방지합니다."
+    },
+    {
+      "item_code": "W-20",
+      "check_title": "Windows Defender 실시간 보호",
+      "status": "양호",
+      "current_state": "실시간 보호: 활성화",
+      "expected_state": "실시간 보호가 활성화되어 있음",
+      "operational_meaning": "실시간 악성 코드 탐지를 통해 시스템 감염을 예방합니다."
+    }
+  ]
+}
