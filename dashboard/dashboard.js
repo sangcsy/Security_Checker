@@ -169,7 +169,7 @@ function displaySummary() {
     const summary = scanData.summary || {};
     document.getElementById('goodCount').textContent = summary.good || 0;
     document.getElementById('needsManagementCount').textContent = summary.needs_management || 0;
-    document.getElementById('manualCheckCount').textContent = (summary.manual_check || 0) + (summary.partial_good || 0);
+    document.getElementById('manualCheckCount').textContent = summary.manual_check || 0;
     document.getElementById('checkFailedCount').textContent = summary.check_failed || 0;
 }
 
@@ -194,7 +194,7 @@ function createStatusChart() {
                 data: [
                     summary.good || 0,
                     summary.needs_management || 0,
-                    (summary.manual_check || 0) + (summary.partial_good || 0),
+                    summary.manual_check || 0,
                     summary.check_failed || 0
                 ],
                 backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#9ca3af'],
@@ -395,14 +395,13 @@ function getStatusClass(status) {
         '양호': 'good',
         '관리 필요': 'danger',
         '수동 확인 필요': 'warning',
-        '부분 양호': 'warning',
         '점검 불가': 'disabled'
     };
     return statusMap[status] || 'default';
 }
 
 function normalizeStatus(status) {
-    return status === '부분 양호' ? '수동 확인 필요' : status;
+    return status;
 }
 
 function truncateText(text, maxLength) {

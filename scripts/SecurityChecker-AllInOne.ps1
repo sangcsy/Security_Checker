@@ -199,7 +199,7 @@ function Test-SecurityCheck {
                     $currentState = "Guest 계정 비활성화"
                 }
                 else {
-                    $status = "취약"
+                    $status = "관리 필요"
                     $currentState = "Guest 계정 활성화"
                 }
             }
@@ -217,18 +217,24 @@ function Test-SecurityCheck {
                 ### 계정 잠금 임계값 설정
                 # 계정 잠금 임계값 확인
                 $lockoutLine = net accounts | Select-String -Pattern "잠금 임계값"
-                $lockoutThreshold = $lockoutLine.ToString().Split(':')[1].Trim()
-                if ($lockoutThreshold -eq "아님") {
-                    $status = "관리 필요"
-                    $currentState = "계정 잠금 임계값이 설정되지 않음"
-                }
-                elseif ([int]$lockoutThreshold -le 5) {
-                    $status = "양호"
-                    $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                if ($null -eq $lockoutLine) {
+                    $status = "점검 불가"
+                    $currentState = "net accounts 출력에서 잠금 임계값을 찾을 수 없음"
                 }
                 else {
-                    $status = "관리 필요"
-                    $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                    $lockoutThreshold = $lockoutLine.ToString().Split(':')[1].Trim()
+                    if ($lockoutThreshold -eq "아님") {
+                        $status = "관리 필요"
+                        $currentState = "계정 잠금 임계값이 설정되지 않음"
+                    }
+                    elseif ([int]$lockoutThreshold -le 5) {
+                        $status = "양호"
+                        $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                    }
+                    else {
+                        $status = "관리 필요"
+                        $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                    }
                 }
             }
             
@@ -243,7 +249,6 @@ function Test-SecurityCheck {
                         if ($null -ne $textPassLine) {
                             $clearTextPass = [int]($textPassLine.ToString().Split('=')[1].Trim())
                         }
-                        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
                     }
                     if ([int]$clearTextPass -eq 0) {
                         $status = "양호"
@@ -258,13 +263,15 @@ function Test-SecurityCheck {
                     $status = "점검 불가"
                     $currentState = "보안 정책 추출 실패 또는 권한 부족: $($_.Exception.Message)"
                 }
+                finally {
+                    if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
+                }
             }
-            
+
             "W-06" {
                 ### 관리자 그룹에 최소한의 사용자 포함
                 # 관리자 그룹 확인
                 $adminLine = Get-LocalGroupMember Administrators
-                $adminCount = 
                 $adminName = ($adminLine | ForEach-Object {$_.Name.ToString().split('\')[1]}) -join ', '
                 if ($adminLine.Count -eq 1) {
                     $status = "양호"
@@ -308,14 +315,20 @@ function Test-SecurityCheck {
                 ### 계정 잠금 기간 설정
                 # 계정 잠금 기간 확인
                 $lockoutLine = net accounts | Select-String -Pattern "잠금 기간"
-                $lockoutTime = $lockoutLine.ToString().Split(':')[1].Trim()
-                if ([int]$lockoutTime -ge 60) {
-                    $status = "양호"
-                    $currentState = "잠금 기간(분): $lockoutTime"
+                if ($null -eq $lockoutLine) {
+                    $status = "점검 불가"
+                    $currentState = "net accounts 출력에서 잠금 기간을 찾을 수 없음"
                 }
                 else {
-                    $status = "관리 필요"
-                    $currentState = "잠금 기간(분): $lockoutTime"
+                    $lockoutTime = $lockoutLine.ToString().Split(':')[1].Trim()
+                    if ([int]$lockoutTime -ge 60) {
+                        $status = "양호"
+                        $currentState = "잠금 기간(분): $lockoutTime"
+                    }
+                    else {
+                        $status = "관리 필요"
+                        $currentState = "잠금 기간(분): $lockoutTime"
+                    }
                 }
             }
             
@@ -327,44 +340,53 @@ function Test-SecurityCheck {
                     # 최소 암호 길이: 8자 이상
                     # 암호 기록 개수: 4개 이상
                     # 비밀번호 복잡성: 1(사용) 
-                $passwordMinAgeLine = net accounts | Select-String -Pattern "최소 암호 사용 기간" 
-                $passwordMaxAgeLine = net accounts | Select-String -Pattern "최대 암호 사용 기간" 
-                $passwordLengthLine = net accounts | Select-String -Pattern "최소 암호 길이"
-                $passwordCountLine = net accounts | Select-String -Pattern "암호 기록 개수"
-                
-                $passwordMinAge = $passwordMinAgeLine.ToString().Split(':')[1].Trim()
-                $passwordMaxAge = $passwordMaxAgeLine.ToString().Split(':')[1].Trim()
-                $passwordLength = $passwordLengthLine.ToString().Split(':')[1].Trim()
-                if ($passwordCountLine.ToString().Split(':')[1].Trim() -eq "없음") {
-                    $passwordCount = 0
+                $netAccountsOutput = net accounts
+                $passwordMinAgeLine = $netAccountsOutput | Select-String -Pattern "최소 암호 사용 기간"
+                $passwordMaxAgeLine = $netAccountsOutput | Select-String -Pattern "최대 암호 사용 기간"
+                $passwordLengthLine = $netAccountsOutput | Select-String -Pattern "최소 암호 길이"
+                $passwordCountLine = $netAccountsOutput | Select-String -Pattern "암호 기록 개수"
+
+                if ($null -eq $passwordMinAgeLine -or $null -eq $passwordMaxAgeLine -or $null -eq $passwordLengthLine -or $null -eq $passwordCountLine) {
+                    $status = "점검 불가"
+                    $currentState = "net accounts 출력에서 암호 정책 항목을 찾을 수 없음"
                 }
                 else {
-                    $passwordCount = $passwordCountLine.ToString().Split(':')[1].Trim()
-                }
-                # 암호 복잡성 확인하기 위한 파일 생성 -> 변수 값 입력 -> 파일 삭제 과정
-                $tempFile = "$env:temp\policy_$([System.Guid]::NewGuid()).inf"
-                try {
-                    secedit /export /cfg $tempFile 2>$null | Out-Null
-                    if (Test-Path $tempFile) {
-                        $complexityLine = Select-String -Path $tempFile -Pattern "PasswordComplexity" -ErrorAction SilentlyContinue
-                        if ($null -ne $complexityLine) {
-                            # PasswordComplexity=1 형식에서 숫자만 추출
-                            $passwordComplexity = [int]($complexityLine.ToString().Split('=')[1].Trim())
-                        }
-                        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
-                    }
-                    if ([int]$passwordMinAge -ge 1 -and [int]$passwordMaxAge -le 90 -and [int]$passwordLength -ge 8 `
-                    -and [int]$passwordCount -ge 4 -and [int]$passwordComplexity -eq 1) {
-                        $status = "양호"
+                    $passwordMinAge = $passwordMinAgeLine.ToString().Split(':')[1].Trim()
+                    $passwordMaxAge = $passwordMaxAgeLine.ToString().Split(':')[1].Trim()
+                    $passwordLength = $passwordLengthLine.ToString().Split(':')[1].Trim()
+                    if ($passwordCountLine.ToString().Split(':')[1].Trim() -eq "없음") {
+                        $passwordCount = 0
                     }
                     else {
-                        $status = "관리 필요"
+                        $passwordCount = $passwordCountLine.ToString().Split(':')[1].Trim()
                     }
-                    $currentState = "최소 기간: ${passwordMinAge}일 / 최대 기간: ${passwordMaxAge}일 / 최소 길이: ${passwordLength}자 / 기록 개수: ${passwordCount}개 / 복잡성: $passwordComplexity"
-                }
-                catch {
-                    $status = "점검 불가"
-                    $currentState = "보안 정책 추출 실패 또는 권한 부족: $($_.Exception.Message)"
+                    # 암호 복잡성 확인하기 위한 파일 생성 -> 변수 값 입력 -> 파일 삭제 과정
+                    $tempFile = "$env:temp\policy_$([System.Guid]::NewGuid()).inf"
+                    try {
+                        secedit /export /cfg $tempFile 2>$null | Out-Null
+                        if (Test-Path $tempFile) {
+                            $complexityLine = Select-String -Path $tempFile -Pattern "PasswordComplexity" -ErrorAction SilentlyContinue
+                            if ($null -ne $complexityLine) {
+                                # PasswordComplexity=1 형식에서 숫자만 추출
+                                $passwordComplexity = [int]($complexityLine.ToString().Split('=')[1].Trim())
+                            }
+                        }
+                        if ([int]$passwordMinAge -ge 1 -and [int]$passwordMaxAge -le 90 -and [int]$passwordLength -ge 8 `
+                        -and [int]$passwordCount -ge 4 -and [int]$passwordComplexity -eq 1) {
+                            $status = "양호"
+                        }
+                        else {
+                            $status = "관리 필요"
+                        }
+                        $currentState = "최소 기간: ${passwordMinAge}일 / 최대 기간: ${passwordMaxAge}일 / 최소 길이: ${passwordLength}자 / 기록 개수: ${passwordCount}개 / 복잡성: $passwordComplexity"
+                    }
+                    catch {
+                        $status = "점검 불가"
+                        $currentState = "보안 정책 추출 실패 또는 권한 부족: $($_.Exception.Message)"
+                    }
+                    finally {
+                        if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
+                    }
                 }
             }
             
@@ -1639,24 +1661,43 @@ function Test-SecurityCheck {
                 ### 백신 프로그램 설치
                 # 양호 : 백신 프로그램이 설치된 경우
                 # 취약 : 백신 프로그램이 설치되지 않은 경우
-                $installedSoftware = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*virus*" -or $_.Name -like "*antivirus*" }
-                if ($installedSoftware) {
+                $antivirusProducts = @()
+
+                try {
+                    $antivirusProducts = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct -ErrorAction Stop
+                }
+                catch {
+                    $antivirusProducts = @()
+                }
+
+                if ($antivirusProducts -and $antivirusProducts.Count -gt 0) {
+                    $productNames = $antivirusProducts | Select-Object -ExpandProperty displayName -Unique
                     $status = "양호"
-                    $currentState = "백신 프로그램이 설치됨"
+                    $currentState = "설치된 백신: " + ($productNames -join ", ")
                 }
                 else {
-                    $status = "관리 필요"
-                    $currentState = "백신 프로그램이 설치되지 않음"
-                }
-                # 대안 방법: Security Center2 네임스페이스에서 AntivirusProduct 클래스 사용
-                $AntivirusProduct = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct
+                    $uninstallPaths = @(
+                        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+                        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+                    )
 
-                if ($AntivirusProduct) {
-                    $status = "양호"
-                    $currentState = "설치된 백신: " + ($AntivirusProduct.displayName -join ", ")
-                } else {
-                    $status = "관리 필요"
-                    $currentState = "보안 센터에 등록된 백신 프로그램이 없음"
+                    $keywordPattern = "antivirus|anti-virus|endpoint|defender|v3|알약|ahnlab|eset|mcafee|kaspersky|avast|sophos|trend micro|bitdefender|norton"
+                    $installedSoftware = foreach ($path in $uninstallPaths) {
+                        Get-ItemProperty -Path $path -ErrorAction SilentlyContinue |
+                            Where-Object { $_.DisplayName -and $_.DisplayName -match $keywordPattern } |
+                            Select-Object -ExpandProperty DisplayName
+                    }
+
+                    $installedSoftware = $installedSoftware | Sort-Object -Unique
+
+                    if ($installedSoftware -and $installedSoftware.Count -gt 0) {
+                        $status = "양호"
+                        $currentState = "보안 센터 등록은 없지만 설치 흔적 확인: " + ($installedSoftware -join ", ")
+                    }
+                    else {
+                        $status = "관리 필요"
+                        $currentState = "보안 센터 등록 또는 설치 흔적으로 확인되는 백신 프로그램이 없음"
+                    }
                 }
             }
             
@@ -1894,7 +1935,6 @@ function Invoke-SecurityScan {
             "양호" { "Green" }
             "관리 필요" { "Red" }
             "수동 확인 필요" { "Yellow" }
-            "부분 양호" { "Yellow" }
             "점검 불가" { "Gray" }
             default { "White" }
         }
@@ -1910,7 +1950,6 @@ function Invoke-SecurityScan {
         good = ($results | Where-Object {$_.status -eq "양호"}).Count
         needs_management = ($results | Where-Object {$_.status -eq "관리 필요"}).Count
         manual_check = ($results | Where-Object {$_.status -eq "수동 확인 필요"}).Count
-        partial_good = ($results | Where-Object {$_.status -eq "부분 양호"}).Count
         check_failed = ($results | Where-Object {$_.status -eq "점검 불가"}).Count
     }
     
@@ -1918,7 +1957,6 @@ function Invoke-SecurityScan {
     Write-Host "  양호: $($summary.good) 건" -ForegroundColor Green
     Write-Host "  관리 필요: $($summary.needs_management) 건" -ForegroundColor Red
     Write-Host "  수동 확인 필요: $($summary.manual_check) 건" -ForegroundColor Yellow
-    Write-Host "  부분 양호: $($summary.partial_good) 건" -ForegroundColor Yellow
     Write-Host "  점검 불가: $($summary.check_failed) 건" -ForegroundColor Gray
     Write-Host ""
     
@@ -2101,7 +2139,7 @@ function Start-EmbeddedWebServer {
     if (-not $SkipBrowser) {
         Write-Host "[5/5] 브라우저에서 결과 표시 중..." -ForegroundColor Yellow
         
-        $dashboardUrl = "http://localhost:$port/?autoload=true"
+        $dashboardUrl = "http://localhost:$port/dashboard/dashboard.html?autoload=true"
         
         Write-Host "대시보드 URL: $dashboardUrl" -ForegroundColor Cyan
         Write-Host ""
@@ -2119,7 +2157,7 @@ function Start-EmbeddedWebServer {
     }
     else {
         Write-Host "[5/5] 브라우저 실행 건너뜀" -ForegroundColor Yellow
-        Write-Host "대시보드 URL: http://localhost:$port" -ForegroundColor Cyan
+        Write-Host "대시보드 URL: http://localhost:$port/dashboard/dashboard.html?autoload=true" -ForegroundColor Cyan
     }
     
     Write-Host ""

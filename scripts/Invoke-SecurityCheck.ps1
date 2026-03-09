@@ -220,18 +220,24 @@ function Test-W04 {
 
     try {
         $lockoutLine = net accounts | Select-String -Pattern "잠금 임계값"
-        $lockoutThreshold = $lockoutLine.ToString().Split(':')[1].Trim()
-                if ($lockoutThreshold -eq "아님") {
-                    $status = "관리 필요"
-                    $currentState = "계정 잠금 임계값이 설정되지 않음"
-                }
-                elseif ([int]$lockoutThreshold -le 5) {
-                    $status = "양호"
-                    $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                if ($null -eq $lockoutLine) {
+                    $status = "점검 불가"
+                    $currentState = "net accounts 출력에서 잠금 임계값을 찾을 수 없음"
                 }
                 else {
-                    $status = "관리 필요"
-                    $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                    $lockoutThreshold = $lockoutLine.ToString().Split(':')[1].Trim()
+                    if ($lockoutThreshold -eq "아님") {
+                        $status = "관리 필요"
+                        $currentState = "계정 잠금 임계값이 설정되지 않음"
+                    }
+                    elseif ([int]$lockoutThreshold -le 5) {
+                        $status = "양호"
+                        $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                    }
+                    else {
+                        $status = "관리 필요"
+                        $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                    }
                 }
         
         return @{
@@ -268,11 +274,13 @@ function Test-W05 {
                             # PasswordComplexity=1 형식에서 숫자만 추출
                             $clearTextPass = [int]($textPassLine.ToString().Split('=')[1].Trim())
                         }
-                        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
                     }
                 }
                 catch {
                     # secedit 실패 시 무시 (관리자 권한 부족)
+                }
+                finally {
+                    if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
                 }
                 if ([int]$clearTextPass -eq 0) {
                     $status = "양호"
@@ -308,7 +316,6 @@ function Test-W06 {
 
     try {
         $adminLine = Get-LocalGroupMember Administrators
-                $adminCount = 
                 $adminName = ($adminLine | ForEach-Object {$_.Name.ToString().split('\')[1]}) -join ', '
                 if ($adminLine.Count -eq 1) {
                     $status = "양호"
@@ -394,14 +401,20 @@ function Test-W08 {
 
     try {
         $lockoutLine = net accounts | Select-String -Pattern "잠금 기간"
-                $lockoutTime = $lockoutLine.ToString().Split(':')[1].Trim()
-                if ([int]$lockoutTime -ge 60) {
-                    $status = "양호"
-                    $currentState = "잠금 기간(분): $lockoutTime"
+                if ($null -eq $lockoutLine) {
+                    $status = "점검 불가"
+                    $currentState = "net accounts 출력에서 잠금 기간을 찾을 수 없음"
                 }
                 else {
-                    $status = "관리 필요"
-                    $currentState = "잠금 기간(분): $lockoutTime"
+                    $lockoutTime = $lockoutLine.ToString().Split(':')[1].Trim()
+                    if ([int]$lockoutTime -ge 60) {
+                        $status = "양호"
+                        $currentState = "잠금 기간(분): $lockoutTime"
+                    }
+                    else {
+                        $status = "관리 필요"
+                        $currentState = "잠금 기간(분): $lockoutTime"
+                    }
                 }
         
         return @{
@@ -429,45 +442,54 @@ function Test-W09 {
     param($checkDef)
 
     try {
-        $passwordMinAgeLine = net accounts | Select-String -Pattern "최소 암호 사용 기간" 
-                $passwordMaxAgeLine = net accounts | Select-String -Pattern "최대 암호 사용 기간" 
-                $passwordLengthLine = net accounts | Select-String -Pattern "최소 암호 길이"
-                $passwordCountLine = net accounts | Select-String -Pattern "암호 기록 개수"
-                
-                $passwordMinAge = $passwordMinAgeLine.ToString().Split(':')[1].Trim()
-                $passwordMaxAge = $passwordMaxAgeLine.ToString().Split(':')[1].Trim()
-                $passwordLength = $passwordLengthLine.ToString().Split(':')[1].Trim()
-                if ($passwordCountLine.ToString().Split(':')[1].Trim() -eq "없음") {
-                    $passwordCount = 0
+        $netAccountsOutput = net accounts
+                $passwordMinAgeLine = $netAccountsOutput | Select-String -Pattern "최소 암호 사용 기간"
+                $passwordMaxAgeLine = $netAccountsOutput | Select-String -Pattern "최대 암호 사용 기간"
+                $passwordLengthLine = $netAccountsOutput | Select-String -Pattern "최소 암호 길이"
+                $passwordCountLine = $netAccountsOutput | Select-String -Pattern "암호 기록 개수"
+
+                if ($null -eq $passwordMinAgeLine -or $null -eq $passwordMaxAgeLine -or $null -eq $passwordLengthLine -or $null -eq $passwordCountLine) {
+                    $status = "점검 불가"
+                    $currentState = "net accounts 출력에서 암호 정책 항목을 찾을 수 없음"
                 }
                 else {
-                    $passwordCount = $passwordCountLine.ToString().Split(':')[1].Trim()
-                }
-                # 암호 복잡성 확인하기 위한 파일 생성 -> 변수 값 입력 -> 파일 삭제 과정
-                $tempFile = "$env:temp\policy_$([System.Guid]::NewGuid()).inf"
-                try {
-                    secedit /export /cfg $tempFile 2>$null | Out-Null
-                    if (Test-Path $tempFile) {
-                        $complexityLine = Select-String -Path $tempFile -Pattern "PasswordComplexity" -ErrorAction SilentlyContinue
-                        if ($null -ne $complexityLine) {
-                            # PasswordComplexity=1 형식에서 숫자만 추출
-                            $passwordComplexity = [int]($complexityLine.ToString().Split('=')[1].Trim())
-                        }
-                        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+                    $passwordMinAge = $passwordMinAgeLine.ToString().Split(':')[1].Trim()
+                    $passwordMaxAge = $passwordMaxAgeLine.ToString().Split(':')[1].Trim()
+                    $passwordLength = $passwordLengthLine.ToString().Split(':')[1].Trim()
+                    if ($passwordCountLine.ToString().Split(':')[1].Trim() -eq "없음") {
+                        $passwordCount = 0
                     }
+                    else {
+                        $passwordCount = $passwordCountLine.ToString().Split(':')[1].Trim()
+                    }
+                    # 암호 복잡성 확인하기 위한 파일 생성 -> 변수 값 입력 -> 파일 삭제 과정
+                    $tempFile = "$env:temp\policy_$([System.Guid]::NewGuid()).inf"
+                    try {
+                        secedit /export /cfg $tempFile 2>$null | Out-Null
+                        if (Test-Path $tempFile) {
+                            $complexityLine = Select-String -Path $tempFile -Pattern "PasswordComplexity" -ErrorAction SilentlyContinue
+                            if ($null -ne $complexityLine) {
+                                # PasswordComplexity=1 형식에서 숫자만 추출
+                                $passwordComplexity = [int]($complexityLine.ToString().Split('=')[1].Trim())
+                            }
+                        }
+                    }
+                    catch {
+                        # secedit 실패 시 무시 (관리자 권한 부족)
+                    }
+                    finally {
+                        if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
+                    }
+
+                    if ([int]$passwordMinAge -ge 1 -and [int]$passwordMaxAge -le 90 -and [int]$passwordLength -ge 8 `
+                    -and [int]$passwordCount -ge 4 -and [int]$passwordComplexity -eq 1) {
+                        $status = "양호"
+                    }
+                    else {
+                        $status = "관리 필요"
+                    }
+                    $currentState = "최소 기간: ${passwordMinAge}일 / 최대 기간: ${passwordMaxAge}일 / 최소 길이: ${passwordLength}자 / 기록 개수: ${passwordCount}개 / 복잡성: $passwordComplexity"
                 }
-                catch {
-                    # secedit 실패 시 무시 (관리자 권한 부족)
-                }
-                
-                if ([int]$passwordMinAge -ge 1 -and [int]$passwordMaxAge -le 90 -and [int]$passwordLength -ge 8 `
-                -and [int]$passwordCount -ge 4 -and [int]$passwordComplexity -eq 1) {
-                    $status = "양호"
-                }
-                else {
-                    $status = "관리 필요"
-                }
-                $currentState = "최소 기간: ${passwordMinAge}일 / 최대 기간: ${passwordMaxAge}일 / 최소 길이: ${passwordLength}자 / 기록 개수: ${passwordCount}개 / 복잡성: $passwordComplexity"
         
         return @{
             item_code = $checkDef.item_code
@@ -2468,25 +2490,44 @@ function Test-W45 {
     param($checkDef)
 
     try {
-        $installedSoftware = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*virus*" -or $_.Name -like "*antivirus*" }
-                if ($installedSoftware) {
-                    $status = "양호"
-                    $currentState = "백신 프로그램이 설치됨"
-                }
-                else {
-                    $status = "관리 필요"
-                    $currentState = "백신 프로그램이 설치되지 않음"
-                }
-                # 대안 방법: Security Center2 네임스페이스에서 AntivirusProduct 클래스 사용
-                $AntivirusProduct = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct
+        $antivirusProducts = @()
 
-                if ($AntivirusProduct) {
-                    $status = "양호"
-                    $currentState = "설치된 백신: " + ($AntivirusProduct.displayName -join ", ")
-                } else {
-                    $status = "관리 필요"
-                    $currentState = "보안 센터에 등록된 백신 프로그램이 없음"
-                }
+        try {
+            $antivirusProducts = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct -ErrorAction Stop
+        }
+        catch {
+            $antivirusProducts = @()
+        }
+
+        if ($antivirusProducts -and $antivirusProducts.Count -gt 0) {
+            $productNames = $antivirusProducts | Select-Object -ExpandProperty displayName -Unique
+            $status = "양호"
+            $currentState = "설치된 백신: " + ($productNames -join ", ")
+        }
+        else {
+            $uninstallPaths = @(
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+            )
+
+            $keywordPattern = "antivirus|anti-virus|endpoint|defender|v3|알약|ahnlab|eset|mcafee|kaspersky|avast|sophos|trend micro|bitdefender|norton"
+            $installedSoftware = foreach ($path in $uninstallPaths) {
+                Get-ItemProperty -Path $path -ErrorAction SilentlyContinue |
+                    Where-Object { $_.DisplayName -and $_.DisplayName -match $keywordPattern } |
+                    Select-Object -ExpandProperty DisplayName
+            }
+
+            $installedSoftware = $installedSoftware | Sort-Object -Unique
+
+            if ($installedSoftware -and $installedSoftware.Count -gt 0) {
+                $status = "양호"
+                $currentState = "보안 센터 등록은 없지만 설치 흔적 확인: " + ($installedSoftware -join ", ")
+            }
+            else {
+                $status = "관리 필요"
+                $currentState = "보안 센터 등록 또는 설치 흔적으로 확인되는 백신 프로그램이 없음"
+            }
+        }
 
         return @{
             item_code = $checkDef.item_code
@@ -2695,7 +2736,6 @@ function Invoke-SecurityInspection {
                 "양호" { "Green" }
                 "관리 필요" { "Red" }
                 "수동 확인 필요" { "Yellow" }
-                "부분 양호" { "Yellow" }
                 "점검 불가" { "Gray" }
                 default { "White" }
             }
@@ -2716,7 +2756,6 @@ function Invoke-SecurityInspection {
             "양호" { "Green" }
             "관리 필요" { "Red" }
             "수동 확인 필요" { "Yellow" }
-            "부분 양호" { "Yellow" }
             "점검 불가" { "Gray" }
             default { "White" }
         }
@@ -2736,7 +2775,6 @@ function Invoke-SecurityInspection {
             good = ($results | Where-Object {$_.status -eq "양호"}).Count
             needs_management = ($results | Where-Object {$_.status -eq "관리 필요"}).Count
             manual_check = ($results | Where-Object {$_.status -eq "수동 확인 필요"}).Count
-            partial_good = ($results | Where-Object {$_.status -eq "부분 양호"}).Count
             check_failed = ($results | Where-Object {$_.status -eq "점검 불가"}).Count
         }
         results = $results
