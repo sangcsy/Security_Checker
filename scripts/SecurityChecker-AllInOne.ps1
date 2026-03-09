@@ -84,6 +84,7 @@ Write-Host ""
 }
 
 $script:SecurityPolicyCache = $null
+$script:NetAccountsCache = $null
 
 function Get-SecurityPolicySettings {
     if ($null -ne $script:SecurityPolicyCache) {
@@ -124,6 +125,63 @@ function Get-SecurityPolicyValue {
     $settings = Get-SecurityPolicySettings
     if ($settings.ContainsKey($Name)) {
         return $settings[$Name]
+    }
+
+    return $null
+}
+
+function Get-NetAccountsOutput {
+    if ($null -ne $script:NetAccountsCache) {
+        return $script:NetAccountsCache
+    }
+
+    try {
+        $script:NetAccountsCache = net accounts 2>$null
+    }
+    catch {
+        $script:NetAccountsCache = @()
+    }
+
+    return $script:NetAccountsCache
+}
+
+function Get-NetAccountsValue {
+    param([Parameter(Mandatory=$true)][string[]]$Patterns)
+
+    $lines = Get-NetAccountsOutput
+    foreach ($line in $lines) {
+        foreach ($pattern in $Patterns) {
+            if ($line -match "^\s*(?:$pattern)\s*:?\s*(?<value>\S.*)$") {
+                return $matches['value'].Trim()
+            }
+        }
+    }
+
+    return $null
+}
+
+function Convert-PolicyTextToInt {
+    param(
+        [string]$Value,
+        [Nullable[int]]$DefaultForNever = 0,
+        [Nullable[int]]$DefaultForUnlimited = -1
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $null
+    }
+
+    $trimmed = $Value.Trim()
+    $number = 0
+    $normalizedNumeric = ($trimmed -replace '[^\-\d]', '')
+    if (-not [string]::IsNullOrWhiteSpace($normalizedNumeric) -and [int]::TryParse($normalizedNumeric, [ref]$number)) {
+        return $number
+    }
+
+    switch -Regex ($trimmed.ToLowerInvariant()) {
+        '^(n/a|na|아님|아니오)$' { return 0 }
+        '^(never|none|없음)$' { return $DefaultForNever }
+        '^(unlimited|무제한)$' { return $DefaultForUnlimited }
     }
 
     return $null
@@ -282,27 +340,33 @@ function Test-SecurityCheck {
                 # 계정 잠금 임계값 확인
                 $lockoutThreshold = Get-SecurityPolicyValue -Name "LockoutBadCount"
                 if ([string]::IsNullOrWhiteSpace($lockoutThreshold)) {
-                    $status = "점검 불가"
-                    $currentState = "계정 잠금 임계값 정책(LockoutBadCount)을 찾을 수 없음"
+                    $lockoutThreshold = Get-NetAccountsValue -Patterns @(
+                        "잠금 임계값(?:\s*\(.*?\))?",
+                        "계정 잠금 임계값(?:\s*\(.*?\))?",
+                        "Lockout threshold(?:\s*\(.*?\))?"
+                    )
+                }
+
+                $lockoutThresholdValue = Convert-PolicyTextToInt -Value $lockoutThreshold -DefaultForNever 0
+                if ([string]::IsNullOrWhiteSpace($lockoutThreshold)) {
+                    $status = "수동 확인 필요"
+                    $currentState = "계정 잠금 임계값 정책을 자동으로 확인할 수 없음"
+                }
+                elseif ($null -eq $lockoutThresholdValue) {
+                    $status = "수동 확인 필요"
+                    $currentState = "계정 잠금 임계값 정책 값을 해석할 수 없음: $lockoutThreshold"
+                }
+                elseif ($lockoutThresholdValue -eq 0) {
+                    $status = "관리 필요"
+                    $currentState = "계정 잠금 임계값이 설정되지 않음"
+                }
+                elseif ($lockoutThresholdValue -le 5) {
+                    $status = "양호"
+                    $currentState = "계정 잠금 임계값: $lockoutThresholdValue"
                 }
                 else {
-                    $lockoutThresholdValue = 0
-                    if (-not [int]::TryParse($lockoutThreshold, [ref]$lockoutThresholdValue)) {
-                        $status = "점검 불가"
-                        $currentState = "계정 잠금 임계값 정책 값을 해석할 수 없음: $lockoutThreshold"
-                    }
-                    elseif ($lockoutThresholdValue -eq 0) {
-                        $status = "관리 필요"
-                        $currentState = "계정 잠금 임계값이 설정되지 않음"
-                    }
-                    elseif ($lockoutThresholdValue -le 5) {
-                        $status = "양호"
-                        $currentState = "계정 잠금 임계값: $lockoutThresholdValue"
-                    }
-                    else {
-                        $status = "관리 필요"
-                        $currentState = "계정 잠금 임계값: $lockoutThresholdValue"
-                    }
+                    $status = "관리 필요"
+                    $currentState = "계정 잠금 임계값: $lockoutThresholdValue"
                 }
             }
             
@@ -310,18 +374,25 @@ function Test-SecurityCheck {
                 ### 해독 가능한 암호화를 사용하여 암호 저장 해제
                 # '해독 가능한 암호화를 사용하여 암호 저장'(ClearTextPassword) 정책 확인
                 $clearTextPass = Get-SecurityPolicyValue -Name "ClearTextPassword"
-                $clearTextPassValue = 0
-                if (-not [int]::TryParse($clearTextPass, [ref]$clearTextPassValue)) {
-                    $status = "점검 불가"
-                    $currentState = "ClearTextPassword 정책 값을 찾을 수 없거나 해석할 수 없음"
-                }
-                elseif ($clearTextPassValue -eq 0) {
+                if ([string]::IsNullOrWhiteSpace($clearTextPass)) {
+                    $clearTextPassValue = 0
                     $status = "양호"
-                    $currentState = "해독 가능한 암호화를 사용하여 암호 저장 정책: 사용 안 함 (0)"
+                    $currentState = "ClearTextPassword 정책이 명시되지 않아 기본값(사용 안 함)으로 해석됨"
                 }
                 else {
-                    $status = "관리 필요"
-                    $currentState = "해독 가능한 암호화를 사용하여 암호 저장 정책: 사용 (1)"
+                    $clearTextPassValue = Convert-PolicyTextToInt -Value $clearTextPass -DefaultForNever 0
+                    if ($null -eq $clearTextPassValue) {
+                        $status = "수동 확인 필요"
+                        $currentState = "ClearTextPassword 정책 값을 해석할 수 없음: $clearTextPass"
+                    }
+                    elseif ($clearTextPassValue -eq 0) {
+                        $status = "양호"
+                        $currentState = "해독 가능한 암호화를 사용하여 암호 저장 정책: 사용 안 함 (0)"
+                    }
+                    else {
+                        $status = "관리 필요"
+                        $currentState = "해독 가능한 암호화를 사용하여 암호 저장 정책: 사용 (1)"
+                    }
                 }
             }
 
@@ -373,10 +444,24 @@ function Test-SecurityCheck {
                 # 계정 잠금 기간 확인
                 $lockoutTime = Get-SecurityPolicyValue -Name "LockoutDuration"
                 $lockoutThreshold = Get-SecurityPolicyValue -Name "LockoutBadCount"
-                $lockoutThresholdValue = 0
-                $hasThreshold = [int]::TryParse($lockoutThreshold, [ref]$lockoutThresholdValue)
+                if ([string]::IsNullOrWhiteSpace($lockoutThreshold)) {
+                    $lockoutThreshold = Get-NetAccountsValue -Patterns @(
+                        "잠금 임계값(?:\s*\(.*?\))?",
+                        "계정 잠금 임계값(?:\s*\(.*?\))?",
+                        "Lockout threshold(?:\s*\(.*?\))?"
+                    )
+                }
                 if ([string]::IsNullOrWhiteSpace($lockoutTime)) {
-                    if ($hasThreshold -and $lockoutThresholdValue -eq 0) {
+                    $lockoutTime = Get-NetAccountsValue -Patterns @(
+                        "잠금 기간(?:\s*\(.*?\))?",
+                        "계정 잠금 기간(?:\s*\(.*?\))?",
+                        "Lockout duration(?:\s*\(.*?\))?"
+                    )
+                }
+
+                $lockoutThresholdValue = Convert-PolicyTextToInt -Value $lockoutThreshold -DefaultForNever 0
+                if ([string]::IsNullOrWhiteSpace($lockoutTime)) {
+                    if ($lockoutThresholdValue -eq 0) {
                         $status = "관리 필요"
                         $currentState = "계정 잠금 임계값이 설정되지 않아 잠금 기간 정책도 적용되지 않음"
                     }
@@ -386,8 +471,8 @@ function Test-SecurityCheck {
                     }
                 }
                 else {
-                    $lockoutTimeValue = 0
-                    if (-not [int]::TryParse($lockoutTime, [ref]$lockoutTimeValue)) {
+                    $lockoutTimeValue = Convert-PolicyTextToInt -Value $lockoutTime -DefaultForNever 0
+                    if ($null -eq $lockoutTimeValue) {
                         $status = "수동 확인 필요"
                         $currentState = "계정 잠금 기간 정책 값을 해석할 수 없음: $lockoutTime"
                     }
@@ -416,31 +501,52 @@ function Test-SecurityCheck {
                 $passwordCount = Get-SecurityPolicyValue -Name "PasswordHistorySize"
                 $passwordComplexity = Get-SecurityPolicyValue -Name "PasswordComplexity"
 
-                if ([string]::IsNullOrWhiteSpace($passwordMinAge) -or
-                    [string]::IsNullOrWhiteSpace($passwordMaxAge) -or
-                    [string]::IsNullOrWhiteSpace($passwordLength) -or
-                    [string]::IsNullOrWhiteSpace($passwordCount) -or
-                    [string]::IsNullOrWhiteSpace($passwordComplexity)) {
-                    $status = "점검 불가"
-                    $currentState = "암호 정책 항목을 찾을 수 없음"
+                if ([string]::IsNullOrWhiteSpace($passwordMinAge)) {
+                    $passwordMinAge = Get-NetAccountsValue -Patterns @(
+                        "최소 암호 사용 기간(?:\s*\(.*?\))?",
+                        "Minimum password age(?:\s*\(.*?\))?"
+                    )
+                }
+                if ([string]::IsNullOrWhiteSpace($passwordMaxAge)) {
+                    $passwordMaxAge = Get-NetAccountsValue -Patterns @(
+                        "최대 암호 사용 기간(?:\s*\(.*?\))?",
+                        "Maximum password age(?:\s*\(.*?\))?"
+                    )
+                }
+                if ([string]::IsNullOrWhiteSpace($passwordLength)) {
+                    $passwordLength = Get-NetAccountsValue -Patterns @(
+                        "최소 암호 길이",
+                        "Minimum password length"
+                    )
+                }
+                if ([string]::IsNullOrWhiteSpace($passwordCount)) {
+                    $passwordCount = Get-NetAccountsValue -Patterns @(
+                        "암호 기록 개수(?:\s*\(.*?\))?",
+                        "최근 암호 기억 수(?:\s*\(.*?\))?",
+                        "Length of password history maintained"
+                    )
+                }
+                if ([string]::IsNullOrWhiteSpace($passwordComplexity)) {
+                    $passwordComplexity = "0"
+                }
+
+                $passwordMinAgeValue = Convert-PolicyTextToInt -Value $passwordMinAge -DefaultForNever 0 -DefaultForUnlimited 0
+                $passwordMaxAgeValue = Convert-PolicyTextToInt -Value $passwordMaxAge -DefaultForNever -1 -DefaultForUnlimited -1
+                $passwordLengthValue = Convert-PolicyTextToInt -Value $passwordLength -DefaultForNever 0 -DefaultForUnlimited 0
+                $passwordCountValue = Convert-PolicyTextToInt -Value $passwordCount -DefaultForNever 0 -DefaultForUnlimited 0
+                $passwordComplexityValue = Convert-PolicyTextToInt -Value $passwordComplexity -DefaultForNever 0 -DefaultForUnlimited 0
+
+                if ($null -eq $passwordMinAgeValue -or
+                    $null -eq $passwordMaxAgeValue -or
+                    $null -eq $passwordLengthValue -or
+                    $null -eq $passwordCountValue -or
+                    $null -eq $passwordComplexityValue) {
+                    $status = "수동 확인 필요"
+                    $currentState = "암호 정책 일부를 자동으로 해석할 수 없음 (최소 기간: $passwordMinAge / 최대 기간: $passwordMaxAge / 최소 길이: $passwordLength / 기록 개수: $passwordCount / 복잡성: $passwordComplexity)"
                 }
                 else {
-                    $passwordMinAgeValue = 0
-                    $passwordMaxAgeValue = 0
-                    $passwordLengthValue = 0
-                    $passwordCountValue = 0
-                    $passwordComplexityValue = 0
-
-                    if (-not [int]::TryParse($passwordMinAge, [ref]$passwordMinAgeValue) -or
-                        -not [int]::TryParse($passwordMaxAge, [ref]$passwordMaxAgeValue) -or
-                        -not [int]::TryParse($passwordLength, [ref]$passwordLengthValue) -or
-                        -not [int]::TryParse($passwordCount, [ref]$passwordCountValue) -or
-                        -not [int]::TryParse($passwordComplexity, [ref]$passwordComplexityValue)) {
-                        $status = "점검 불가"
-                        $currentState = "암호 정책 값을 해석할 수 없음"
-                    }
-                    elseif ($passwordMinAgeValue -ge 1 -and $passwordMaxAgeValue -le 90 -and $passwordLengthValue -ge 8 `
-                        -and $passwordCountValue -ge 4 -and $passwordComplexityValue -eq 1) {
+                    if ($passwordMinAgeValue -ge 1 -and $passwordMaxAgeValue -gt 0 -and $passwordMaxAgeValue -le 90 -and $passwordLengthValue -ge 8 `
+                    -and $passwordCountValue -ge 4 -and $passwordComplexityValue -eq 1) {
                         $status = "양호"
                     }
                     else {
@@ -1798,12 +1904,6 @@ function Test-SecurityCheck {
             "W-46" {
                 ### SAM 파일 접근 통제 설정
                 $samPath = "$env:SystemRoot\System32\config\SAM"
-                $allowedAccounts = @(
-                    "NT AUTHORITY\SYSTEM",
-                    "BUILTIN\Administrators",
-                    "NT SERVICE\TrustedInstaller"
-                )
-
                 try {
                     $acl = Get-Acl -Path $samPath
 
@@ -1832,8 +1932,8 @@ function Test-SecurityCheck {
                     }
                 }
                 catch {
-                    $status = "점검 불가"
-                    $currentState = "SAM 파일 접근 권한 확인 실패: $($_.Exception.Message)"
+                    $status = "수동 확인 필요"
+                    $currentState = "SAM 파일 ACL 직접 조회가 차단되었음: $($_.Exception.Message)"
                 }
             }
             
