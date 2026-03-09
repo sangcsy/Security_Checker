@@ -952,17 +952,18 @@ function Test-SecurityCheck {
             "W-27" {
                 ### 최신 Windows OS Build 버전 적용
                 # 현재 Windows OS Build 버전 확인 (마지막 보안 패치 날짜 기준으로 90일 경과 시 '관리 필요', 이내면 '수동 확인 필요')
-                $osInfo = Get-ComputerInfo -Property "WindowsVersion", "WindowsBuildLabEx", "WindowsProductName"
-                $currentBuild = [int](Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuild
+                $ntReg = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -ErrorAction SilentlyContinue
+                $currentBuild = [int]$ntReg.CurrentBuild
+                $productName = $ntReg.ProductName
                 $installDate = (Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 1).InstalledOn
-            
-                 if ($installDate -lt (Get-Date).AddDays(-90)) {
+
+                if ($installDate -lt (Get-Date).AddDays(-90)) {
                     $status = "관리 필요"
-                    $currentState = "현재 빌드 버전: $currentBuild ($($osInfo.WindowsProductName)) / 마지막 보안 패치 설치 후 90일 경과 ($($installDate.ToString('yyyy-MM-dd')))"
+                    $currentState = "현재 빌드 버전: $currentBuild ($productName) / 마지막 보안 패치 설치 후 90일 경과 ($($installDate.ToString('yyyy-MM-dd')))"
                 }
                 else {
                     $status = "수동 확인 필요"
-                    $currentState = "현재 빌드 버전: $currentBuild ($($osInfo.WindowsProductName)) / 마지막 보안 패치 설치 날짜: $($installDate.ToString('yyyy-MM-dd'))"
+                    $currentState = "현재 빌드 버전: $currentBuild ($productName) / 마지막 보안 패치 설치 날짜: $($installDate.ToString('yyyy-MM-dd'))"
                 }
             }
             
@@ -1766,12 +1767,14 @@ function Test-SecurityCheck {
                 # 로그온하지 않고 시스템 종료 허용
                 $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
                 $val = Get-ItemProperty -Path $regPath -Name "ShutdownWithoutLogon" -ErrorAction SilentlyContinue
-                if ($null -ne $val -and $val.ShutdownWithoutLogon -eq 0) {
+                $shutdownVal = if ($null -ne $val) { $val.ShutdownWithoutLogon } else { $null }
+                if ($shutdownVal -eq 0) {
                     $status = "양호"
                     $currentState = "로그온하지 않은 사용자의 시스템 종료가 비활성화됨"
                 } else {
                     $status = "관리 필요"
-                    $currentState = "로그온하지 않은 사용자의 시스템 종료가 허용됨 (ShutdownWithoutLogon=$($val.ShutdownWithoutLogon))"
+                    $displayVal = if ($null -ne $shutdownVal) { $shutdownVal } else { "미설정(기본값=1)" }
+                    $currentState = "로그온하지 않은 사용자의 시스템 종료가 허용됨 (ShutdownWithoutLogon=$displayVal)"
                 }
             }
             
