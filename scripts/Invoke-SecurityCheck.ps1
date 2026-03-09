@@ -3426,7 +3426,7 @@ $checkFunctions = @{
 
 function Invoke-SecurityInspection {
     Write-Host "=" * 80 -ForegroundColor Cyan
-    Write-Host "Windows 보안 구성 검사 도구 v1.0 (64개 항목)" -ForegroundColor Cyan
+    Write-Host "Windows 보안 구성 검사 도구 v1.0.1 (64개 항목)" -ForegroundColor Cyan
     Write-Host "KISA 기술적 취약점 분석·평가 방법 상세가이드 기반" -ForegroundColor Cyan
     Write-Host "=" * 80 -ForegroundColor Cyan
     Write-Host ""

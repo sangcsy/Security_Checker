@@ -59,7 +59,7 @@ $params = @{
     Description = 'KISA 기반 Windows 보안 점검 도구'
     Company = 'Security Checker'
     Product = 'SecurityChecker'
-    Version = '1.0.0.0'
+    Version = '1.0.1.0'
 }
 
 if ($IncludeIcon -and (Test-Path $iconPath)) {
@@ -68,14 +68,16 @@ if ($IncludeIcon -and (Test-Path $iconPath)) {
 
 Invoke-PS2EXE @params
 
-$deployRoot = Join-Path $outputRoot 'SecurityChecker_v1.0'
+$deployRoot = Join-Path $outputRoot 'SecurityChecker_v1.0.1'
 if (Test-Path $deployRoot) {
     Remove-Item -Recurse -Force $deployRoot
 }
 New-Item -ItemType Directory -Path $deployRoot -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $deployRoot 'dashboard') -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $deployRoot 'config') -Force | Out-Null
 Copy-Item -Path $exePath -Destination $deployRoot
-Copy-Item -Path $dashboardDir -Destination (Join-Path $deployRoot 'dashboard') -Recurse
-Copy-Item -Path $configDir -Destination (Join-Path $deployRoot 'config') -Recurse
+Copy-Item -Path (Join-Path $dashboardDir '*') -Destination (Join-Path $deployRoot 'dashboard') -Recurse -Force
+Copy-Item -Path (Join-Path $configDir '*') -Destination (Join-Path $deployRoot 'config') -Recurse -Force
 Remove-Item -Recurse -Force $tempBuildRoot
 
 @"

@@ -4,7 +4,7 @@
     "based_on": "KISA 기술적 취약점 분석·평가 방법 상세가이드 (64개 항목)",
     "target_os": "Windows",
     "total_checks": 64,
-    "description": "Windows 보안 구성 검사 항목 정의 (v1.0, 64개 항목)"
+    "description": "Windows 보안 구성 검사 항목 정의 (v1.0.1, 64개 항목)"
   },
   "checks": [
     {
