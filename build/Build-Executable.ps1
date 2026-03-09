@@ -15,6 +15,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $inputScript = Join-Path $projectRoot 'scripts\SecurityChecker-AllInOne.ps1'
 $outputRoot = Join-Path $projectRoot 'dist'
+$tempBuildRoot = Join-Path $outputRoot '.build'
 $dashboardDir = Join-Path $projectRoot 'dashboard'
 $configDir = Join-Path $projectRoot 'config'
 $iconPath = Join-Path $projectRoot 'icon.ico'
@@ -41,8 +42,12 @@ if (-not (Get-Module -ListAvailable -Name PS2EXE)) {
 
 Import-Module PS2EXE
 New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
+if (Test-Path $tempBuildRoot) {
+    Remove-Item -Recurse -Force $tempBuildRoot
+}
+New-Item -ItemType Directory -Path $tempBuildRoot -Force | Out-Null
 
-$exePath = Join-Path $outputRoot "$OutputName.exe"
+$exePath = Join-Path $tempBuildRoot "$OutputName.exe"
 $params = @{
     InputFile = $inputScript
     OutputFile = $exePath
@@ -71,6 +76,7 @@ New-Item -ItemType Directory -Path $deployRoot -Force | Out-Null
 Copy-Item -Path $exePath -Destination $deployRoot
 Copy-Item -Path $dashboardDir -Destination (Join-Path $deployRoot 'dashboard') -Recurse
 Copy-Item -Path $configDir -Destination (Join-Path $deployRoot 'config') -Recurse
+Remove-Item -Recurse -Force $tempBuildRoot
 
 @"
 Windows 보안 구성 검사 도구
@@ -81,5 +87,5 @@ Windows 보안 구성 검사 도구
 정의 파일: config\\check_definitions.json
 "@ | Set-Content -Path (Join-Path $deployRoot 'README.txt') -Encoding UTF8
 
-Write-Host "빌드 완료: $exePath" -ForegroundColor Green
+Write-Host "빌드 완료: $(Join-Path $deployRoot "$OutputName.exe")" -ForegroundColor Green
 Write-Host "배포 폴더: $deployRoot" -ForegroundColor Green

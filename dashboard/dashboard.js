@@ -167,7 +167,7 @@ function displayMetadata() {
 }
 
 function displaySummary() {
-    const summary = scanData.summary || {};
+    const summary = getComputedSummary();
     document.getElementById('goodCount').textContent = summary.good || 0;
     document.getElementById('needsManagementCount').textContent = summary.needs_management || 0;
     document.getElementById('manualCheckCount').textContent = summary.manual_check || 0;
@@ -181,7 +181,7 @@ function createCharts() {
 
 function createStatusChart() {
     const ctx = document.getElementById('statusChart').getContext('2d');
-    const summary = scanData.summary || {};
+    const summary = getComputedSummary();
 
     if (window.statusChartInstance) {
         window.statusChartInstance.destroy();
@@ -537,7 +537,7 @@ function exportToReport() {
 }
 
 function buildReportHtml() {
-    const summary = scanData.summary || {};
+    const summary = getComputedSummary();
     const metadata = scanData.metadata || {};
     const generatedAt = new Date().toLocaleString('ko-KR');
     const categories = buildCategorySummary(filteredResults);
@@ -866,6 +866,36 @@ function buildCategorySummary(results) {
     return Array.from(counts.entries())
         .map(([category, count]) => ({ category, count }))
         .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
+}
+
+function getComputedSummary() {
+    const summary = {
+        good: 0,
+        needs_management: 0,
+        manual_check: 0,
+        check_failed: 0
+    };
+
+    (scanData?.results || []).forEach((result) => {
+        switch (normalizeStatus(result.status)) {
+        case '\uC591\uD638':
+            summary.good += 1;
+            break;
+        case '\uAD00\uB9AC \uD544\uC694':
+            summary.needs_management += 1;
+            break;
+        case '\uC218\uB3D9 \uD655\uC778 \uD544\uC694':
+            summary.manual_check += 1;
+            break;
+        case '\uC810\uAC80 \uBD88\uAC00':
+            summary.check_failed += 1;
+            break;
+        default:
+            break;
+        }
+    });
+
+    return summary;
 }
 
 function escapeHtml(value) {
