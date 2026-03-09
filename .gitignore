@@ -1,0 +1,5 @@
+﻿dist/
+*.backup
+*_scan*.json
+scan-result*.json
+results*.json

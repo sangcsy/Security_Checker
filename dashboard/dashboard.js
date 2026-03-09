@@ -53,7 +53,7 @@ function initializeEventListeners() {
 // Load check definitions
 async function loadCheckDefinitions() {
     try {
-        const response = await fetch('./check_definitions.json');
+        const response = await fetch('../config/check_definitions.json');
         checkDefinitions = await response.json();
         console.log('Check definitions loaded successfully');
     } catch (error) {
