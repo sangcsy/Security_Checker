@@ -1,9 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Windows 보안 구성 대시보드</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -61,9 +64,9 @@
                 <div class="summary-card danger">
                     <div class="summary-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" class="summary-icon-svg">
-                            <path d="M12 3 21 19H3L12 3Z"></path>
-                            <path d="M12 9V13"></path>
-                            <circle cx="12" cy="17" r="1"></circle>
+                            <path d="M8.2 3.5h7.6l4.7 4.7v7.6l-4.7 4.7H8.2l-4.7-4.7V8.2z"></path>
+                            <path d="M12 7.8v5.9"></path>
+                            <path d="M12 15.9h.01"></path>
                         </svg>
                     </div>
                     <div class="summary-content">
@@ -149,7 +152,10 @@
             <h2>상세 검사 결과</h2>
             <div class="results-stats">
                 <span>총 <strong id="displayedCount">0</strong>개 항목 표시</span>
-                <button id="exportBtn" class="export-btn">CSV 내보내기</button>
+                <div class="export-actions">
+                    <button id="reportBtn" class="export-btn report-btn">보고서 다운로드</button>
+                    <button id="exportBtn" class="export-btn">CSV 내보내기</button>
+                </div>
             </div>
             <div class="results-table-container">
                 <table class="results-table">
