@@ -18,7 +18,6 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $dashboardDir = Join-Path $projectRoot 'dashboard'
 $configFile = Join-Path $projectRoot 'config\check_definitions.json'
 $defaultPage = '/dashboard/dashboard.html'
-$url = "http://localhost:$Port/"
 
 $requiredFiles = @(
     (Join-Path $dashboardDir 'dashboard.html'),
@@ -34,17 +33,32 @@ if ($missingFiles.Count -gt 0) {
     exit 1
 }
 
-$portInUse = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
-if ($portInUse) {
-    Write-Host "포트 $Port 는 이미 사용 중입니다." -ForegroundColor Red
+$selectedPort = $Port
+$maxAttempts = 10
+for ($i = 0; $i -lt $maxAttempts; $i++) {
+    $testPort = $Port + $i
+    $portInUse = Get-NetTCPConnection -LocalPort $testPort -ErrorAction SilentlyContinue
+    if (-not $portInUse) {
+        $selectedPort = $testPort
+        break
+    }
+}
+
+if (Get-NetTCPConnection -LocalPort $selectedPort -ErrorAction SilentlyContinue) {
+    Write-Host "포트 $Port 부터 $($Port + $maxAttempts - 1) 까지 모두 사용 중입니다." -ForegroundColor Red
     exit 1
 }
+
+$url = "http://localhost:$selectedPort/"
 
 Write-Host ('=' * 70) -ForegroundColor Cyan
 Write-Host 'Security Checker Dashboard Server' -ForegroundColor Cyan
 Write-Host ('=' * 70) -ForegroundColor Cyan
 Write-Host "프로젝트 루트: $projectRoot" -ForegroundColor DarkGray
 Write-Host "대시보드 주소: ${url}dashboard/dashboard.html" -ForegroundColor Green
+if ($selectedPort -ne $Port) {
+    Write-Host "요청한 포트 $Port 가 사용 중이어서 $selectedPort 로 자동 변경했습니다." -ForegroundColor Yellow
+}
 Write-Host ''
 
 $listener = $null
