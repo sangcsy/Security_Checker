@@ -79,8 +79,72 @@ function Initialize-Environment {
         Write-Host "✓ 관리자 권한으로 실행 중" -ForegroundColor Green
     }
     
-    Write-Host "✓ 환경 초기화 완료" -ForegroundColor Green
-    Write-Host ""
+Write-Host "✓ 환경 초기화 완료" -ForegroundColor Green
+Write-Host ""
+}
+
+$script:SecurityPolicyCache = $null
+
+function Get-SecurityPolicySettings {
+    if ($null -ne $script:SecurityPolicyCache) {
+        return $script:SecurityPolicyCache
+    }
+
+    $settings = @{}
+    $tempFile = Join-Path $env:TEMP "policy_$([System.Guid]::NewGuid()).inf"
+
+    try {
+        secedit /export /cfg $tempFile /quiet 2>$null | Out-Null
+        if (-not (Test-Path $tempFile)) {
+            return $settings
+        }
+
+        foreach ($line in Get-Content -Path $tempFile -ErrorAction SilentlyContinue) {
+            if ($line -match "^\s*([^=]+?)\s*=\s*(.*)\s*$") {
+                $settings[$matches[1].Trim()] = $matches[2].Trim()
+            }
+        }
+    }
+    catch {
+        return @{}
+    }
+    finally {
+        if (Test-Path $tempFile) {
+            Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    $script:SecurityPolicyCache = $settings
+    return $script:SecurityPolicyCache
+}
+
+function Get-SecurityPolicyValue {
+    param([Parameter(Mandatory=$true)][string]$Name)
+
+    $settings = Get-SecurityPolicySettings
+    if ($settings.ContainsKey($Name)) {
+        return $settings[$Name]
+    }
+
+    return $null
+}
+
+function Get-CommandExecutablePath {
+    param([string]$CommandLine)
+
+    if ([string]::IsNullOrWhiteSpace($CommandLine)) {
+        return $null
+    }
+
+    $trimmed = $CommandLine.Trim()
+    if ($trimmed.StartsWith('"')) {
+        $parts = $trimmed.Split('"')
+        if ($parts.Count -ge 2) {
+            return $parts[1]
+        }
+    }
+
+    return ($trimmed -split '\s+')[0]
 }
 
 # ========================================
@@ -188,7 +252,7 @@ function Test-SecurityCheck {
             "W-02" {
                 ### Guest 계정 비활성화
                 # Guest 계정 존재 여부 파악 (이름으로 검색)
-                $guest = Get-LocalUser -Name 'Guest' -ErrorAction SilentlyContinue
+                $guest = Get-LocalUser -ErrorAction SilentlyContinue | Where-Object { $_.SID -like '*-501' } | Select-Object -First 1
                 if ($null -eq $guest) {
                     $status = "양호"
                     $currentState = "Guest 계정이 존재하지 않음"
@@ -216,24 +280,28 @@ function Test-SecurityCheck {
             "W-04" {
                 ### 계정 잠금 임계값 설정
                 # 계정 잠금 임계값 확인
-                $lockoutLine = net accounts | Select-String -Pattern "잠금 임계값"
-                if ($null -eq $lockoutLine) {
+                $lockoutThreshold = Get-SecurityPolicyValue -Name "LockoutBadCount"
+                if ([string]::IsNullOrWhiteSpace($lockoutThreshold)) {
                     $status = "점검 불가"
-                    $currentState = "net accounts 출력에서 잠금 임계값을 찾을 수 없음"
+                    $currentState = "계정 잠금 임계값 정책(LockoutBadCount)을 찾을 수 없음"
                 }
                 else {
-                    $lockoutThreshold = $lockoutLine.ToString().Split(':')[1].Trim()
-                    if ($lockoutThreshold -eq "아님") {
+                    $lockoutThresholdValue = 0
+                    if (-not [int]::TryParse($lockoutThreshold, [ref]$lockoutThresholdValue)) {
+                        $status = "점검 불가"
+                        $currentState = "계정 잠금 임계값 정책 값을 해석할 수 없음: $lockoutThreshold"
+                    }
+                    elseif ($lockoutThresholdValue -eq 0) {
                         $status = "관리 필요"
                         $currentState = "계정 잠금 임계값이 설정되지 않음"
                     }
-                    elseif ([int]$lockoutThreshold -le 5) {
+                    elseif ($lockoutThresholdValue -le 5) {
                         $status = "양호"
-                        $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                        $currentState = "계정 잠금 임계값: $lockoutThresholdValue"
                     }
                     else {
                         $status = "관리 필요"
-                        $currentState = "계정 잠금 임계값: $lockoutThreshold"
+                        $currentState = "계정 잠금 임계값: $lockoutThresholdValue"
                     }
                 }
             }
@@ -241,30 +309,19 @@ function Test-SecurityCheck {
             "W-05" {
                 ### 해독 가능한 암호화를 사용하여 암호 저장 해제
                 # '해독 가능한 암호화를 사용하여 암호 저장'(ClearTextPassword) 정책 확인
-                $tempFile = "$env:temp\policy_$([System.Guid]::NewGuid()).inf"
-                try {
-                    secedit /export /cfg $tempFile 2>$null | Out-Null
-                    if (Test-Path $tempFile) {
-                        $textPassLine = Select-String -Path $tempFile -Pattern "ClearTextPassword" -ErrorAction SilentlyContinue
-                        if ($null -ne $textPassLine) {
-                            $clearTextPass = [int]($textPassLine.ToString().Split('=')[1].Trim())
-                        }
-                    }
-                    if ([int]$clearTextPass -eq 0) {
-                        $status = "양호"
-                        $currentState = "해독 가능한 암호화를 사용하여 암호 저장 정책: 사용 안 함 (0)"
-                    }
-                    else {
-                        $status = "관리 필요"
-                        $currentState = "해독 가능한 암호화를 사용하여 암호 저장 정책: 사용 (1)"
-                    }
-                }
-                catch {
+                $clearTextPass = Get-SecurityPolicyValue -Name "ClearTextPassword"
+                $clearTextPassValue = 0
+                if (-not [int]::TryParse($clearTextPass, [ref]$clearTextPassValue)) {
                     $status = "점검 불가"
-                    $currentState = "보안 정책 추출 실패 또는 권한 부족: $($_.Exception.Message)"
+                    $currentState = "ClearTextPassword 정책 값을 찾을 수 없거나 해석할 수 없음"
                 }
-                finally {
-                    if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
+                elseif ($clearTextPassValue -eq 0) {
+                    $status = "양호"
+                    $currentState = "해독 가능한 암호화를 사용하여 암호 저장 정책: 사용 안 함 (0)"
+                }
+                else {
+                    $status = "관리 필요"
+                    $currentState = "해독 가능한 암호화를 사용하여 암호 저장 정책: 사용 (1)"
                 }
             }
 
@@ -314,20 +371,33 @@ function Test-SecurityCheck {
             "W-08" {
                 ### 계정 잠금 기간 설정
                 # 계정 잠금 기간 확인
-                $lockoutLine = net accounts | Select-String -Pattern "잠금 기간"
-                if ($null -eq $lockoutLine) {
-                    $status = "점검 불가"
-                    $currentState = "net accounts 출력에서 잠금 기간을 찾을 수 없음"
+                $lockoutTime = Get-SecurityPolicyValue -Name "LockoutDuration"
+                $lockoutThreshold = Get-SecurityPolicyValue -Name "LockoutBadCount"
+                $lockoutThresholdValue = 0
+                $hasThreshold = [int]::TryParse($lockoutThreshold, [ref]$lockoutThresholdValue)
+                if ([string]::IsNullOrWhiteSpace($lockoutTime)) {
+                    if ($hasThreshold -and $lockoutThresholdValue -eq 0) {
+                        $status = "관리 필요"
+                        $currentState = "계정 잠금 임계값이 설정되지 않아 잠금 기간 정책도 적용되지 않음"
+                    }
+                    else {
+                        $status = "수동 확인 필요"
+                        $currentState = "계정 잠금은 활성화되어 있을 수 있으나 잠금 기간 정책(LockoutDuration)을 자동 확인하지 못함"
+                    }
                 }
                 else {
-                    $lockoutTime = $lockoutLine.ToString().Split(':')[1].Trim()
-                    if ([int]$lockoutTime -ge 60) {
+                    $lockoutTimeValue = 0
+                    if (-not [int]::TryParse($lockoutTime, [ref]$lockoutTimeValue)) {
+                        $status = "수동 확인 필요"
+                        $currentState = "계정 잠금 기간 정책 값을 해석할 수 없음: $lockoutTime"
+                    }
+                    elseif ($lockoutTimeValue -ge 15) {
                         $status = "양호"
-                        $currentState = "잠금 기간(분): $lockoutTime"
+                        $currentState = "잠금 기간(분): $lockoutTimeValue"
                     }
                     else {
                         $status = "관리 필요"
-                        $currentState = "잠금 기간(분): $lockoutTime"
+                        $currentState = "잠금 기간(분): $lockoutTimeValue"
                     }
                 }
             }
@@ -340,53 +410,43 @@ function Test-SecurityCheck {
                     # 최소 암호 길이: 8자 이상
                     # 암호 기록 개수: 4개 이상
                     # 비밀번호 복잡성: 1(사용) 
-                $netAccountsOutput = net accounts
-                $passwordMinAgeLine = $netAccountsOutput | Select-String -Pattern "최소 암호 사용 기간"
-                $passwordMaxAgeLine = $netAccountsOutput | Select-String -Pattern "최대 암호 사용 기간"
-                $passwordLengthLine = $netAccountsOutput | Select-String -Pattern "최소 암호 길이"
-                $passwordCountLine = $netAccountsOutput | Select-String -Pattern "암호 기록 개수"
+                $passwordMinAge = Get-SecurityPolicyValue -Name "MinimumPasswordAge"
+                $passwordMaxAge = Get-SecurityPolicyValue -Name "MaximumPasswordAge"
+                $passwordLength = Get-SecurityPolicyValue -Name "MinimumPasswordLength"
+                $passwordCount = Get-SecurityPolicyValue -Name "PasswordHistorySize"
+                $passwordComplexity = Get-SecurityPolicyValue -Name "PasswordComplexity"
 
-                if ($null -eq $passwordMinAgeLine -or $null -eq $passwordMaxAgeLine -or $null -eq $passwordLengthLine -or $null -eq $passwordCountLine) {
+                if ([string]::IsNullOrWhiteSpace($passwordMinAge) -or
+                    [string]::IsNullOrWhiteSpace($passwordMaxAge) -or
+                    [string]::IsNullOrWhiteSpace($passwordLength) -or
+                    [string]::IsNullOrWhiteSpace($passwordCount) -or
+                    [string]::IsNullOrWhiteSpace($passwordComplexity)) {
                     $status = "점검 불가"
-                    $currentState = "net accounts 출력에서 암호 정책 항목을 찾을 수 없음"
+                    $currentState = "암호 정책 항목을 찾을 수 없음"
                 }
                 else {
-                    $passwordMinAge = $passwordMinAgeLine.ToString().Split(':')[1].Trim()
-                    $passwordMaxAge = $passwordMaxAgeLine.ToString().Split(':')[1].Trim()
-                    $passwordLength = $passwordLengthLine.ToString().Split(':')[1].Trim()
-                    if ($passwordCountLine.ToString().Split(':')[1].Trim() -eq "없음") {
-                        $passwordCount = 0
+                    $passwordMinAgeValue = 0
+                    $passwordMaxAgeValue = 0
+                    $passwordLengthValue = 0
+                    $passwordCountValue = 0
+                    $passwordComplexityValue = 0
+
+                    if (-not [int]::TryParse($passwordMinAge, [ref]$passwordMinAgeValue) -or
+                        -not [int]::TryParse($passwordMaxAge, [ref]$passwordMaxAgeValue) -or
+                        -not [int]::TryParse($passwordLength, [ref]$passwordLengthValue) -or
+                        -not [int]::TryParse($passwordCount, [ref]$passwordCountValue) -or
+                        -not [int]::TryParse($passwordComplexity, [ref]$passwordComplexityValue)) {
+                        $status = "점검 불가"
+                        $currentState = "암호 정책 값을 해석할 수 없음"
+                    }
+                    elseif ($passwordMinAgeValue -ge 1 -and $passwordMaxAgeValue -le 90 -and $passwordLengthValue -ge 8 `
+                        -and $passwordCountValue -ge 4 -and $passwordComplexityValue -eq 1) {
+                        $status = "양호"
                     }
                     else {
-                        $passwordCount = $passwordCountLine.ToString().Split(':')[1].Trim()
+                        $status = "관리 필요"
                     }
-                    # 암호 복잡성 확인하기 위한 파일 생성 -> 변수 값 입력 -> 파일 삭제 과정
-                    $tempFile = "$env:temp\policy_$([System.Guid]::NewGuid()).inf"
-                    try {
-                        secedit /export /cfg $tempFile 2>$null | Out-Null
-                        if (Test-Path $tempFile) {
-                            $complexityLine = Select-String -Path $tempFile -Pattern "PasswordComplexity" -ErrorAction SilentlyContinue
-                            if ($null -ne $complexityLine) {
-                                # PasswordComplexity=1 형식에서 숫자만 추출
-                                $passwordComplexity = [int]($complexityLine.ToString().Split('=')[1].Trim())
-                            }
-                        }
-                        if ([int]$passwordMinAge -ge 1 -and [int]$passwordMaxAge -le 90 -and [int]$passwordLength -ge 8 `
-                        -and [int]$passwordCount -ge 4 -and [int]$passwordComplexity -eq 1) {
-                            $status = "양호"
-                        }
-                        else {
-                            $status = "관리 필요"
-                        }
-                        $currentState = "최소 기간: ${passwordMinAge}일 / 최대 기간: ${passwordMaxAge}일 / 최소 길이: ${passwordLength}자 / 기록 개수: ${passwordCount}개 / 복잡성: $passwordComplexity"
-                    }
-                    catch {
-                        $status = "점검 불가"
-                        $currentState = "보안 정책 추출 실패 또는 권한 부족: $($_.Exception.Message)"
-                    }
-                    finally {
-                        if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
-                    }
+                    $currentState = "최소 기간: ${passwordMinAgeValue}일 / 최대 기간: ${passwordMaxAgeValue}일 / 최소 길이: ${passwordLengthValue}자 / 기록 개수: ${passwordCountValue}개 / 복잡성: $passwordComplexityValue"
                 }
             }
             
@@ -537,29 +597,43 @@ function Test-SecurityCheck {
             "W-15" {
                 ### 사용자 개인키 사용 시 암호 입력
                 # 개인 키 사용 시 암호 입력 (ForceKeyProtection) 레지스트리 값 확인
-                $registryPath = "HKLM:\SOFTWARE\Microsoft\Cryptography\Protect\Providers\Microsoft Smart Card Key Storage Provider"
-                $valueName = "ForceKeyProtection"
-                if (Test-Path $registryPath) {
-                    $forceKeyProtection = Get-ItemProperty -Path $registryPath -Name $valueName -ErrorAction SilentlyContinue
-                    if ($null -ne $forceKeyProtection) {
-                        $result = $forceKeyProtection.$valueName
-                        if ($result -eq 1) {
-                            $status = "양호"
-                            $currentState = "ForceKeyProtection 설정: 사용 (1)"
+                $privateKeyCerts = @()
+                foreach ($storePath in @("Cert:\CurrentUser\My", "Cert:\LocalMachine\My")) {
+                    if (Test-Path $storePath) {
+                        $privateKeyCerts += Get-ChildItem -Path $storePath -ErrorAction SilentlyContinue | Where-Object { $_.HasPrivateKey }
+                    }
+                }
+                $privateKeyCerts = $privateKeyCerts | Sort-Object Thumbprint -Unique
+
+                if ($privateKeyCerts.Count -eq 0) {
+                    $status = "양호"
+                    $currentState = "현재 시스템에서 개인키 사용 인증서를 발견하지 못함"
+                }
+                else {
+                    $registryPath = "HKLM:\SOFTWARE\Microsoft\Cryptography\Protect\Providers\Microsoft Smart Card Key Storage Provider"
+                    $valueName = "ForceKeyProtection"
+                    if (Test-Path $registryPath) {
+                        $forceKeyProtection = Get-ItemProperty -Path $registryPath -Name $valueName -ErrorAction SilentlyContinue
+                        if ($null -ne $forceKeyProtection) {
+                            $result = $forceKeyProtection.$valueName
+                            if ($result -eq 1) {
+                                $status = "양호"
+                                $currentState = "ForceKeyProtection 설정: 사용 (1)"
+                            }
+                            else {
+                                $status = "관리 필요"
+                                $currentState = "ForceKeyProtection 설정: 사용 안 함 (0)"
+                            }
                         }
                         else {
-                            $status = "관리 필요"
-                            $currentState = "ForceKeyProtection 설정: 사용 안 함 (0)"
+                            $status = "수동 확인 필요"
+                            $currentState = "개인키 사용 인증서는 존재하나 ForceKeyProtection 값을 자동 확인하지 못함"
                         }
                     }
                     else {
-                        $status = "점검 불가"
-                        $currentState = "ForceKeyProtection를 찾을 수 없음"
+                        $status = "양호"
+                        $currentState = "개인키 사용 인증서는 존재하지만 Smart Card Key Storage Provider 경로가 없어 해당 정책 비대상일 가능성이 높음"
                     }
-                }
-                else {
-                    $status = "점검 불가"
-                    $currentState = "ForceKeyProtection 레지스트리 경로를 찾을 수 없음"
                 }
             }
             
@@ -597,22 +671,35 @@ function Test-SecurityCheck {
                 # AutoShareServer 레지스트리 값 확인
                 $registryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters"
                 $valueName = "AutoShareServer"
+                $fallbackValueName = "AutoShareWks"
                 if (Test-Path $registryPath) {
                     $autoShareServer = Get-ItemProperty -Path $registryPath -Name $valueName -ErrorAction SilentlyContinue
+                    $valueUsed = $valueName
+                    if ($null -eq $autoShareServer) {
+                        $autoShareServer = Get-ItemProperty -Path $registryPath -Name $fallbackValueName -ErrorAction SilentlyContinue
+                        $valueUsed = $fallbackValueName
+                    }
                     if ($null -ne $autoShareServer) {
-                        $result = $autoShareServer.$valueName
+                        $result = $autoShareServer.$valueUsed
                         if ($result -eq 0) {
                             $status = "양호"
-                            $currentState = "AutoShareServer 설정: 사용 안 함 (0)"
+                            $currentState = "$valueUsed 설정: 사용 안 함 (0)"
                         }
                         else {
                             $status = "관리 필요"
-                            $currentState = "AutoShareServer 설정: 사용 (1)"
+                            $currentState = "$valueUsed 설정: 사용 (1)"
                         }
                     }
                     else {
-                        $status = "점검 불가"
-                        $currentState = "AutoShareServer를 찾을 수 없음"
+                        $defaultShares = Get-SmbShare -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^[A-Z]\$$|^ADMIN\$$' }
+                        if ($defaultShares.Count -gt 0) {
+                            $status = "관리 필요"
+                            $currentState = "레지스트리 값은 없지만 기본 공유가 활성화됨: $($defaultShares.Name -join ', ')"
+                        }
+                        else {
+                            $status = "양호"
+                            $currentState = "레지스트리 값은 없고 드라이브/관리 기본 공유도 확인되지 않음"
+                        }
                     }
                 }
                 else {
@@ -942,7 +1029,7 @@ function Test-SecurityCheck {
                         }
                         # 위 모든 양호 조건에 해당하지 않는 경우
                         else {
-                            $status = "취약"
+                            $status = "관리 필요"
                             $currentState = "IIS 사용 중이며 MSADC 가상 디렉터리 및 RDS 레지스트리 키가 존재함 (RDS 취약)"
                         }
                     }
@@ -957,12 +1044,16 @@ function Test-SecurityCheck {
                 $productName = $ntReg.ProductName
                 $installDate = (Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 1).InstalledOn
 
-                if ($installDate -lt (Get-Date).AddDays(-90)) {
+                if ($null -eq $installDate) {
+                    $status = "점검 불가"
+                    $currentState = "최근 보안 패치 설치 이력을 확인할 수 없음"
+                }
+                elseif ($installDate -lt (Get-Date).AddDays(-90)) {
                     $status = "관리 필요"
                     $currentState = "현재 빌드 버전: $currentBuild ($productName) / 마지막 보안 패치 설치 후 90일 경과 ($($installDate.ToString('yyyy-MM-dd')))"
                 }
                 else {
-                    $status = "수동 확인 필요"
+                    $status = "양호"
                     $currentState = "현재 빌드 버전: $currentBuild ($productName) / 마지막 보안 패치 설치 날짜: $($installDate.ToString('yyyy-MM-dd'))"
                 }
             }
@@ -1325,7 +1416,7 @@ function Test-SecurityCheck {
                 # 취약 : 패치 절차가 수립되어 있지 않거나 주기적으로 패치를 설치하지 않는 경우
                 $lastPatch = Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 1
                 if ($null -eq $lastPatch) {
-                    $status = "취약"
+                    $status = "관리 필요"
                     $currentState = "시스템에서 설치된 패치 기록을 찾을 수 없습니다."
                 }
                 else {
@@ -1338,7 +1429,7 @@ function Test-SecurityCheck {
                         $currentState = "최근 보안 패치 설치 기록 있음: $($lastDate.ToString('yyyy-MM-dd')) ($($daysSincePatch)일 경과)"
                     }
                     else {
-                        $status = "취약"
+                        $status = "관리 필요"
                         $currentState = "마지막 보안 패치 설치 후 90일 이상 경과되었습니다: $($lastDate.ToString('yyyy-MM-dd'))"
                     }
                 }
@@ -1616,7 +1707,9 @@ function Test-SecurityCheck {
                     $hasEveryone = $false
 
                     foreach ($access in $acl.Access) {
-                        if ($access.IdentityReference -eq "Everyone") {
+                        if ($access.IdentityReference -like "*Everyone*" -and
+                            $access.AccessControlType -eq "Allow" -and
+                            $access.FileSystemRights -match "Write|Modify|FullControl") {
                             $hasEveryone = $true
                             break
                         }
@@ -1714,13 +1807,21 @@ function Test-SecurityCheck {
                 try {
                     $acl = Get-Acl -Path $samPath
 
+                    $highRiskPrincipals = @(
+                        "Everyone",
+                        "BUILTIN\Users",
+                        "NT AUTHORITY\Authenticated Users",
+                        "BUILTIN\Guests"
+                    )
                     $unauthorizedAccess = $acl.Access | Where-Object {
-                        $allowedAccounts -notcontains $_.IdentityReference.Value
+                        $_.AccessControlType -eq "Allow" -and
+                        $_.IdentityReference.Value -in $highRiskPrincipals -and
+                        $_.FileSystemRights -match "Read|Write|Modify|FullControl|TakeOwnership|ChangePermissions"
                     }
 
                     if ($unauthorizedAccess.Count -eq 0) {
                         $status = "양호"
-                        $currentState = "SAM 파일 접근 권한이 적절히 설정됨 (허용된 시스템 계정만 존재)"
+                        $currentState = "SAM 파일에 광범위한 사용자 권한이 부여되지 않음"
                     }
                     else {
                         $status = "관리 필요"
@@ -1852,12 +1953,12 @@ function Test-SecurityCheck {
                 # 이동식 미디어 포맷 및 꺼내기 허용
                 $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
                 $allocateDASD = (Get-ItemProperty -Path $regPath -Name "AllocateDASD" -ErrorAction SilentlyContinue).AllocateDASD
-                if ($allocateDASD -eq "0") {
+                if ($allocateDASD -eq "0" -or $allocateDASD -eq 0) {
                     $status = "양호"
                     $currentState = "이동식 미디어 포맷 및 꺼내기가 관리자만 허용됨 (AllocateDASD=0)"
                 } elseif ($null -eq $allocateDASD) {
-                    $status = "수동 확인 필요"
-                    $currentState = "AllocateDASD 값이 설정되지 않음. 기본 동작(관리자만 가능)일 수 있으나 명시적 설정 권장"
+                    $status = "양호"
+                    $currentState = "AllocateDASD 값이 설정되지 않음. 기본 동작(관리자만 허용)으로 해석"
                 } else {
                     $status = "관리 필요"
                     $currentState = "이동식 미디어 포맷 및 꺼내기가 일반 사용자에게 허용됨 (AllocateDASD=$allocateDASD)"
@@ -1977,20 +2078,28 @@ function Test-SecurityCheck {
             
             "W-60" {
                 # 보안 채널 데이터 디지털 암호화 또는 서명
-                $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters"
-                $issues60 = @()
-                $requireSignOrSeal = (Get-ItemProperty -Path $regPath -Name "RequireSignOrSeal" -ErrorAction SilentlyContinue).RequireSignOrSeal
-                $sealSecureChannel = (Get-ItemProperty -Path $regPath -Name "SealSecureChannel" -ErrorAction SilentlyContinue).SealSecureChannel
-                $signSecureChannel = (Get-ItemProperty -Path $regPath -Name "SignSecureChannel" -ErrorAction SilentlyContinue).SignSecureChannel
-                if ($null -eq $requireSignOrSeal -or $requireSignOrSeal -ne 1) { $issues60 += "RequireSignOrSeal=$requireSignOrSeal (권고: 1)" }
-                if ($null -eq $sealSecureChannel -or $sealSecureChannel -ne 1) { $issues60 += "SealSecureChannel=$sealSecureChannel (권고: 1)" }
-                if ($null -eq $signSecureChannel -or $signSecureChannel -ne 1) { $issues60 += "SignSecureChannel=$signSecureChannel (권고: 1)" }
-                if ($issues60.Count -eq 0) {
+                $computerSystem = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
+                if ($null -eq $computerSystem -or -not $computerSystem.PartOfDomain) {
                     $status = "양호"
-                    $currentState = "보안 채널 데이터 암호화 및 서명이 모두 활성화됨"
-                } else {
-                    $status = "관리 필요"
-                    $currentState = "보안 채널 설정 미흡: $($issues60 -join '; ')"
+                    $currentState = "도메인 미가입 시스템으로 보안 채널 점검 대상이 아님"
+                }
+                else {
+                    $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters"
+                    $issues60 = @()
+                    $requireSignOrSeal = (Get-ItemProperty -Path $regPath -Name "RequireSignOrSeal" -ErrorAction SilentlyContinue).RequireSignOrSeal
+                    $sealSecureChannel = (Get-ItemProperty -Path $regPath -Name "SealSecureChannel" -ErrorAction SilentlyContinue).SealSecureChannel
+                    $signSecureChannel = (Get-ItemProperty -Path $regPath -Name "SignSecureChannel" -ErrorAction SilentlyContinue).SignSecureChannel
+                    if ($null -eq $requireSignOrSeal -or $requireSignOrSeal -ne 1) { $issues60 += "RequireSignOrSeal=$requireSignOrSeal (권고: 1)" }
+                    if ($null -eq $sealSecureChannel -or $sealSecureChannel -ne 1) { $issues60 += "SealSecureChannel=$sealSecureChannel (권고: 1)" }
+                    if ($null -eq $signSecureChannel -or $signSecureChannel -ne 1) { $issues60 += "SignSecureChannel=$signSecureChannel (권고: 1)" }
+                    if ($issues60.Count -eq 0) {
+                        $status = "양호"
+                        $currentState = "보안 채널 데이터 암호화 및 서명이 모두 활성화됨"
+                    }
+                    else {
+                        $status = "관리 필요"
+                        $currentState = "보안 채널 설정 미흡: $($issues60 -join '; ')"
+                    }
                 }
             }
             
@@ -2043,15 +2152,40 @@ function Test-SecurityCheck {
                         }
                     }
                 }
+                $manualEntries62 = @()
+                foreach ($entryLine in $allEntries62) {
+                    try {
+                        $value = ($entryLine -split ' = ', 2)[1]
+                        $exePath = Get-CommandExecutablePath -CommandLine $value
+                        if ([string]::IsNullOrWhiteSpace($exePath)) {
+                            $manualEntries62 += $entryLine
+                            continue
+                        }
+                        if (-not (Test-Path $exePath)) {
+                            $manualEntries62 += "$entryLine (실행 파일 없음)"
+                            continue
+                        }
+                        $signature = Get-AuthenticodeSignature -FilePath $exePath -ErrorAction Stop
+                        if ($signature.Status -ne "Valid") {
+                            $manualEntries62 += "$entryLine (서명 검증 실패: $($signature.Status))"
+                        }
+                    }
+                    catch {
+                        $manualEntries62 += "$entryLine (자동 검증 실패: $($_.Exception.Message.Trim()))"
+                    }
+                }
                 if ($suspicious62.Count -gt 0) {
                     $status = "수동 확인 필요"
                     $currentState = "의심스러운 시작 프로그램 발견 ($($suspicious62.Count)개): $($suspicious62 -join '; ')"
                 } elseif ($allEntries62.Count -eq 0) {
                     $status = "양호"
                     $currentState = "시작 프로그램 항목이 없음"
+                } elseif ($manualEntries62.Count -eq 0) {
+                    $status = "양호"
+                    $currentState = "시작 프로그램이 존재하지만 실행 파일이 모두 정상 경로에 있고 디지털 서명이 유효함 ($($allEntries62.Count)개)"
                 } else {
                     $status = "수동 확인 필요"
-                    $currentState = "시작 프로그램 목록 수동 확인 필요 ($($allEntries62.Count)개): $($allEntries62 -join '; ')"
+                    $currentState = "시작 프로그램 중 추가 검토 필요 항목 ($($manualEntries62.Count)개): $($manualEntries62 -join '; ')"
                 }
             }
             
@@ -2060,15 +2194,20 @@ function Test-SecurityCheck {
                 $computerSystem = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
                 $isDomainMember = $computerSystem.PartOfDomain
                 if (-not $isDomainMember) {
-                    $status = "수동 확인 필요"
-                    $currentState = "도메인에 가입되지 않은 시스템. 도메인 환경이 아닌 경우 해당 없음"
+                    $status = "양호"
+                    $currentState = "도메인에 가입되지 않은 시스템으로 도메인 컨트롤러 동기화 점검 비대상"
                 } else {
                     $w32tmOutput = w32tm /query /status 2>$null
                     if ($w32tmOutput) {
                         $sourceLine = $w32tmOutput | Select-String "Source"
                         $sourceStr = if ($sourceLine) { $sourceLine.Line.Trim() } else { "확인 불가" }
-                        $status = "수동 확인 필요"
-                        $currentState = "도메인 가입됨. 시간 동기화 출처 수동 확인 필요: $sourceStr"
+                        if ($sourceStr -match "Local CMOS Clock|Free-running System Clock|VM IC Time Synchronization Provider") {
+                            $status = "관리 필요"
+                            $currentState = "도메인 가입 시스템이나 시간 동기화 출처가 부적절함: $sourceStr"
+                        } else {
+                            $status = "양호"
+                            $currentState = "도메인 가입 시스템이며 시간 동기화 출처가 설정됨: $sourceStr"
+                        }
                     } else {
                         $status = "점검 불가"
                         $currentState = "시간 동기화 상태 확인 불가 (w32tm 출력 없음)"
