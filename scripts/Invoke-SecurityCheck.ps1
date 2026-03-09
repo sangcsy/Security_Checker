@@ -2652,23 +2652,521 @@ function Test-W47 {
         }
     }
 }
-function Test-W48 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W49 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W50 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W51 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W52 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W53 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W54 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W55 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W56 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W57 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W58 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W59 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W60 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W61 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W62 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W63 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
-function Test-W64 { param($checkDef) try { $status = "점검 불가"; $currentState = "구현 대기 중"; return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = $status; current_state = $currentState; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } catch { return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning } } }
+function Test-W48 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+        $val = Get-ItemProperty -Path $regPath -Name "ShutdownWithoutLogon" -ErrorAction SilentlyContinue
+        if ($null -ne $val -and $val.ShutdownWithoutLogon -eq 0) {
+            $status = "양호"
+            $currentState = "로그온하지 않은 사용자의 시스템 종료가 비활성화됨"
+        } else {
+            $status = "관리 필요"
+            $currentState = "로그온하지 않은 사용자의 시스템 종료가 허용됨 (ShutdownWithoutLogon=$($val.ShutdownWithoutLogon))"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W49 {
+    param($checkDef)
+    try {
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        secedit /export /cfg $tempFile /quiet 2>$null
+        $content = Get-Content $tempFile -ErrorAction SilentlyContinue
+        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+
+        $line = $content | Select-String "SeRemoteShutdownPrivilege"
+        if ($null -ne $line) {
+            $lineStr = $line.Line
+            if ($lineStr -match "\*S-1-5-32-544" -and $lineStr -notmatch "\*S-1-1-0" -and $lineStr -notmatch "\*S-1-5-11") {
+                $status = "양호"
+                $currentState = "원격 강제 종료 권한이 Administrators 그룹으로만 제한됨"
+            } else {
+                $status = "관리 필요"
+                $currentState = "원격 강제 종료 권한에 과도한 계정이 포함됨: $lineStr"
+            }
+        } else {
+            $status = "수동 확인 필요"
+            $currentState = "SeRemoteShutdownPrivilege 정책을 secedit으로 확인 불가 (수동 확인 필요)"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W50 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa"
+        $val = Get-ItemProperty -Path $regPath -Name "CrashOnAuditFail" -ErrorAction SilentlyContinue
+        if ($null -ne $val -and $val.CrashOnAuditFail -ge 1) {
+            $status = "양호"
+            $currentState = "감사 로그 실패 시 시스템 종료 정책이 활성화됨 (CrashOnAuditFail=$($val.CrashOnAuditFail))"
+        } else {
+            $status = "관리 필요"
+            $currentState = "감사 로그 실패 시 시스템 종료 정책이 비활성화됨 (CrashOnAuditFail 미설정 또는 0)"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W51 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa"
+        $restrictAnonymousSAM = (Get-ItemProperty -Path $regPath -Name "RestrictAnonymousSAM" -ErrorAction SilentlyContinue).RestrictAnonymousSAM
+        $restrictAnonymous = (Get-ItemProperty -Path $regPath -Name "RestrictAnonymous" -ErrorAction SilentlyContinue).RestrictAnonymous
+
+        $issues = @()
+        if ($restrictAnonymousSAM -ne 1) { $issues += "RestrictAnonymousSAM=$restrictAnonymousSAM (권고: 1)" }
+        if ($null -eq $restrictAnonymous -or $restrictAnonymous -lt 1) { $issues += "RestrictAnonymous=$restrictAnonymous (권고: 1 이상)" }
+
+        if ($issues.Count -eq 0) {
+            $status = "양호"
+            $currentState = "SAM 계정과 공유의 익명 열거가 비활성화됨"
+        } else {
+            $status = "관리 필요"
+            $currentState = "익명 열거 제한 설정 미흡: $($issues -join ', ')"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W52 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+        $autoAdminLogon = (Get-ItemProperty -Path $regPath -Name "AutoAdminLogon" -ErrorAction SilentlyContinue).AutoAdminLogon
+
+        if ($autoAdminLogon -eq "1" -or $autoAdminLogon -eq 1) {
+            $status = "관리 필요"
+            $currentState = "자동 로그온(AutoAdminLogon)이 활성화됨 - 보안 위험"
+        } else {
+            $status = "양호"
+            $currentState = "자동 로그온(AutoAdminLogon)이 비활성화됨"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W53 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+        $allocateDASD = (Get-ItemProperty -Path $regPath -Name "AllocateDASD" -ErrorAction SilentlyContinue).AllocateDASD
+
+        if ($allocateDASD -eq "0") {
+            $status = "양호"
+            $currentState = "이동식 미디어 포맷 및 꺼내기가 관리자만 허용됨 (AllocateDASD=0)"
+        } elseif ($null -eq $allocateDASD) {
+            $status = "수동 확인 필요"
+            $currentState = "AllocateDASD 값이 설정되지 않음. 기본 동작(관리자만 가능)일 수 있으나 명시적 설정 권장"
+        } else {
+            $status = "관리 필요"
+            $currentState = "이동식 미디어 포맷 및 꺼내기가 일반 사용자에게 허용됨 (AllocateDASD=$allocateDASD)"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W54 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
+        $issues = @()
+
+        $synAttack = (Get-ItemProperty -Path $regPath -Name "SynAttackProtect" -ErrorAction SilentlyContinue).SynAttackProtect
+        $icmpRedirect = (Get-ItemProperty -Path $regPath -Name "EnableICMPRedirect" -ErrorAction SilentlyContinue).EnableICMPRedirect
+        $sourceRoute = (Get-ItemProperty -Path $regPath -Name "DisableIPSourceRouting" -ErrorAction SilentlyContinue).DisableIPSourceRouting
+
+        if ($null -eq $synAttack -or $synAttack -eq 0) { $issues += "SynAttackProtect 미설정 (권고: 1 이상)" }
+        if ($null -ne $icmpRedirect -and $icmpRedirect -ne 0) { $issues += "EnableICMPRedirect 활성화됨 (권고: 0)" }
+        if ($null -eq $sourceRoute -or $sourceRoute -lt 2) { $issues += "DisableIPSourceRouting 미흡 (현재: $sourceRoute, 권고: 2)" }
+
+        if ($issues.Count -eq 0) {
+            $status = "양호"
+            $currentState = "DoS 방어 레지스트리 설정이 적절히 구성됨"
+        } else {
+            $status = "관리 필요"
+            $currentState = "DoS 방어 설정 미흡: $($issues -join '; ')"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W55 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Print\Providers\LanMan Print Services\Servers"
+        $addPrinterDrivers = (Get-ItemProperty -Path $regPath -Name "AddPrinterDrivers" -ErrorAction SilentlyContinue).AddPrinterDrivers
+
+        if ($addPrinterDrivers -eq 1) {
+            $status = "양호"
+            $currentState = "프린터 드라이버 설치가 관리자만 가능하도록 설정됨 (AddPrinterDrivers=1)"
+        } else {
+            $status = "관리 필요"
+            $currentState = "일반 사용자도 프린터 드라이버를 설치할 수 있음 (AddPrinterDrivers 미설정 또는 0)"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W56 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters"
+        $autoDisconnect = (Get-ItemProperty -Path $regPath -Name "AutoDisconnect" -ErrorAction SilentlyContinue).AutoDisconnect
+
+        if ($null -eq $autoDisconnect) {
+            $status = "양호"
+            $currentState = "SMB 자동 세션 해제 기본값(15분) 사용 중"
+        } elseif ($autoDisconnect -gt 0 -and $autoDisconnect -le 15) {
+            $status = "양호"
+            $currentState = "SMB 유휴 세션 자동 해제 설정: $autoDisconnect 분 (적절)"
+        } elseif ($autoDisconnect -eq -1) {
+            $status = "관리 필요"
+            $currentState = "SMB 유휴 세션 자동 해제가 비활성화됨 (AutoDisconnect=-1)"
+        } else {
+            $status = "관리 필요"
+            $currentState = "SMB 유휴 세션 해제 시간이 너무 긴 경우 (AutoDisconnect=$autoDisconnect 분, 권고: 15분 이하)"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W57 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+        $caption = (Get-ItemProperty -Path $regPath -Name "LegalNoticeCaption" -ErrorAction SilentlyContinue).LegalNoticeCaption
+        $text = (Get-ItemProperty -Path $regPath -Name "LegalNoticeText" -ErrorAction SilentlyContinue).LegalNoticeText
+
+        if (-not [string]::IsNullOrWhiteSpace($caption) -and -not [string]::IsNullOrWhiteSpace($text)) {
+            $status = "양호"
+            $currentState = "로그온 경고 메시지 설정됨 (제목: $caption)"
+        } else {
+            $status = "관리 필요"
+            $currentState = "로그온 경고 메시지가 설정되지 않음 (LegalNoticeCaption 또는 LegalNoticeText 미설정)"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W58 {
+    param($checkDef)
+    try {
+        $localUsers = Get-LocalUser -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -eq $true -and $_.Name -ne "Guest" }
+        $issues = @()
+
+        foreach ($user in $localUsers) {
+            $profile = "C:\Users\$($user.Name)"
+            if (Test-Path $profile) {
+                $acl = Get-Acl -Path $profile -ErrorAction SilentlyContinue
+                if ($acl) {
+                    $everyoneWrite = $acl.Access | Where-Object {
+                        $_.IdentityReference -like "*Everyone*" -and
+                        $_.FileSystemRights -match "Write|FullControl|Modify" -and
+                        $_.AccessControlType -eq "Allow"
+                    }
+                    if ($everyoneWrite) { $issues += "$($user.Name) 홈 디렉터리에 Everyone 쓰기 권한 존재" }
+                }
+            }
+        }
+
+        if ($issues.Count -eq 0) {
+            $status = "양호"
+            $currentState = "사용자 홈 디렉터리 권한이 적절히 설정됨"
+        } else {
+            $status = "관리 필요"
+            $currentState = "홈 디렉터리 권한 문제: $($issues -join '; ')"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W59 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa"
+        $lmCompatLevel = (Get-ItemProperty -Path $regPath -Name "LmCompatibilityLevel" -ErrorAction SilentlyContinue).LmCompatibilityLevel
+
+        if ($null -eq $lmCompatLevel) {
+            $status = "관리 필요"
+            $currentState = "LAN Manager 인증 수준이 설정되지 않음 (기본값은 취약한 LM/NTLM 허용 가능)"
+        } elseif ($lmCompatLevel -ge 5) {
+            $status = "양호"
+            $currentState = "NTLMv2만 허용 설정됨 (LmCompatibilityLevel=$lmCompatLevel)"
+        } elseif ($lmCompatLevel -ge 3) {
+            $status = "수동 확인 필요"
+            $currentState = "NTLMv2 허용되나 레거시도 일부 허용됨 (LmCompatibilityLevel=$lmCompatLevel, 권고: 5 이상)"
+        } else {
+            $status = "관리 필요"
+            $currentState = "취약한 레거시 LM/NTLM 인증이 허용됨 (LmCompatibilityLevel=$lmCompatLevel, 권고: 5 이상)"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W60 {
+    param($checkDef)
+    try {
+        $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters"
+        $issues = @()
+
+        $requireSignOrSeal = (Get-ItemProperty -Path $regPath -Name "RequireSignOrSeal" -ErrorAction SilentlyContinue).RequireSignOrSeal
+        $sealSecureChannel = (Get-ItemProperty -Path $regPath -Name "SealSecureChannel" -ErrorAction SilentlyContinue).SealSecureChannel
+        $signSecureChannel = (Get-ItemProperty -Path $regPath -Name "SignSecureChannel" -ErrorAction SilentlyContinue).SignSecureChannel
+
+        if ($null -eq $requireSignOrSeal -or $requireSignOrSeal -ne 1) { $issues += "RequireSignOrSeal=$requireSignOrSeal (권고: 1)" }
+        if ($null -eq $sealSecureChannel -or $sealSecureChannel -ne 1) { $issues += "SealSecureChannel=$sealSecureChannel (권고: 1)" }
+        if ($null -eq $signSecureChannel -or $signSecureChannel -ne 1) { $issues += "SignSecureChannel=$signSecureChannel (권고: 1)" }
+
+        if ($issues.Count -eq 0) {
+            $status = "양호"
+            $currentState = "보안 채널 데이터 암호화 및 서명이 모두 활성화됨"
+        } else {
+            $status = "관리 필요"
+            $currentState = "보안 채널 설정 미흡: $($issues -join '; ')"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W61 {
+    param($checkDef)
+    try {
+        $criticalPaths = @(
+            $env:SystemRoot,
+            "$env:SystemRoot\System32",
+            "$env:SystemRoot\System32\config"
+        )
+        $issues = @()
+
+        foreach ($path in $criticalPaths) {
+            if (Test-Path $path) {
+                $acl = Get-Acl -Path $path -ErrorAction SilentlyContinue
+                if ($acl) {
+                    $everyoneWrite = $acl.Access | Where-Object {
+                        $_.IdentityReference -like "*Everyone*" -and
+                        $_.FileSystemRights -match "Write|FullControl|Modify" -and
+                        $_.AccessControlType -eq "Allow"
+                    }
+                    if ($everyoneWrite) { $issues += "$path 에 Everyone 쓰기 권한 존재" }
+                }
+            }
+        }
+
+        if ($issues.Count -eq 0) {
+            $status = "양호"
+            $currentState = "중요 시스템 디렉터리에 과도한 권한 없음"
+        } else {
+            $status = "관리 필요"
+            $currentState = "중요 디렉터리 권한 문제 발견: $($issues -join '; ')"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W62 {
+    param($checkDef)
+    try {
+        $runKeys = @(
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+        )
+        $allEntries = @()
+        $suspicious = @()
+
+        foreach ($key in $runKeys) {
+            if (Test-Path $key) {
+                $props = Get-ItemProperty -Path $key -ErrorAction SilentlyContinue
+                if ($props) {
+                    $entries = $props.PSObject.Properties | Where-Object { $_.Name -notlike "PS*" }
+                    foreach ($entry in $entries) {
+                        $allEntries += "$($entry.Name) = $($entry.Value)"
+                        if ($entry.Value -match "\\temp\\|AppData\\.*\.exe|cmd\.exe /|powershell.*-enc|http://|https://|Invoke-Expression|IEX") {
+                            $suspicious += "$($entry.Name): $($entry.Value)"
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($suspicious.Count -gt 0) {
+            $status = "수동 확인 필요"
+            $currentState = "의심스러운 시작 프로그램 발견 ($($suspicious.Count)개): $($suspicious -join '; ')"
+        } elseif ($allEntries.Count -eq 0) {
+            $status = "양호"
+            $currentState = "시작 프로그램 항목이 없음"
+        } else {
+            $status = "수동 확인 필요"
+            $currentState = "시작 프로그램 목록 수동 확인 필요 ($($allEntries.Count)개): $($allEntries -join '; ')"
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W63 {
+    param($checkDef)
+    try {
+        $computerSystem = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
+        $isDomainMember = $computerSystem.PartOfDomain
+
+        if (-not $isDomainMember) {
+            $status = "수동 확인 필요"
+            $currentState = "도메인에 가입되지 않은 시스템. 도메인 환경이 아닌 경우 해당 없음"
+        } else {
+            $w32tmOutput = w32tm /query /status 2>$null
+            if ($w32tmOutput) {
+                $sourceLine = $w32tmOutput | Select-String "Source"
+                $sourceStr = if ($sourceLine) { $sourceLine.Line.Trim() } else { "확인 불가" }
+                $status = "수동 확인 필요"
+                $currentState = "도메인 가입됨. 시간 동기화 출처 수동 확인 필요: $sourceStr"
+            } else {
+                $status = "점검 불가"
+                $currentState = "시간 동기화 상태 확인 불가 (w32tm 출력 없음)"
+            }
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
+function Test-W64 {
+    param($checkDef)
+    try {
+        $profiles = Get-NetFirewallProfile -ErrorAction SilentlyContinue
+        if ($null -ne $profiles) {
+            $disabledProfiles = $profiles | Where-Object { $_.Enabled -eq $false }
+            if ($disabledProfiles.Count -eq 0) {
+                $status = "양호"
+                $currentState = "모든 방화벽 프로필(도메인/프라이빗/퍼블릭)이 활성화됨"
+            } else {
+                $profileNames = $disabledProfiles | ForEach-Object { $_.Name }
+                $status = "관리 필요"
+                $currentState = "다음 프로필에서 방화벽이 비활성화됨: $($profileNames -join ', ')"
+            }
+        } else {
+            $fwRegBase = "HKLM:\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy"
+            $issues = @()
+            foreach ($profile in @("DomainProfile", "StandardProfile", "PublicProfile")) {
+                $enabled = (Get-ItemProperty "$fwRegBase\$profile" -Name "EnableFirewall" -ErrorAction SilentlyContinue).EnableFirewall
+                if ($null -eq $enabled -or $enabled -ne 1) { $issues += "$profile 비활성화" }
+            }
+            if ($issues.Count -eq 0) {
+                $status = "양호"
+                $currentState = "모든 프로필에서 Windows 방화벽이 활성화됨 (레지스트리 확인)"
+            } else {
+                $status = "관리 필요"
+                $currentState = "방화벽 비활성화된 프로필: $($issues -join ', ')"
+            }
+        }
+        return @{
+            item_code = $checkDef.item_code; check_title = $checkDef.check_title
+            status = $status; current_state = $currentState
+            expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning
+        }
+    }
+    catch {
+        return @{ item_code = $checkDef.item_code; check_title = $checkDef.check_title; status = "점검 불가"; current_state = "오류: $_"; expected_state = $checkDef.expected_state; operational_meaning = $checkDef.operational_meaning }
+    }
+}
 
 # ========================================
 # 검사 함수 매핑
